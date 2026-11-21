@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">SCENAR</string>
+    <string name="home_description">Turn a distressed description into a clear, verified incident report.</string>
+    <string name="report_emergency">Report emergency</string>
+    <string name="prototype_warning">Prototype only. This build does not contact emergency services.</string>
+    <string name="report_title">What happened?</string>
+    <string name="report_prompt">Describe the emergency in your own words. Include anything you can see, hear or smell.</string>
+    <string name="incident_description_hint">Emergency description</string>
+    <string name="structure_report">Create incident report</string>
+    <string name="fake_ai_notice">The current skeleton uses deterministic sample output so every teammate can work offline.</string>
+    <string name="review_title">Review and correct</string>
+    <string name="no_report">No report is available. Return and describe an incident first.</string>
+    <string name="incident_type">Incident type</string>
+    <string name="summary">Summary</string>
+    <string name="people_affected">People affected</string>
+    <string name="location">Location</string>
+    <string name="hazards">Hazards</string>
+    <string name="missing_information">Missing information</string>
+    <string name="confirm_report">Confirm and preview dispatch</string>
+    <string name="responder_title">Responder incident view</string>
+    <string name="simulated_dispatch_status">SIMULATED DISPATCH — REPORT READY</string>
+    <string name="start_new_report">Start a new report</string>
+</resources>

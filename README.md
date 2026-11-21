@@ -47,4 +47,31 @@ V2 is the weekend success threshold. Later versions begin only after the current
 
 ## Current status
 
-Repository initialized. Framework and implementation stack are still to be selected by the team.
+The repository contains a native Android skeleton built with Java, XML layouts,
+Material 3 and a single-activity fragment flow. A deterministic fake AI service
+supports the complete prototype path without requiring an API key or network:
+
+```text
+Home → Report emergency → Review and correct → Responder incident view
+```
+
+### Shared contracts
+
+- `IncidentReport` is the common model used by every feature area.
+- `IncidentAiService` is the boundary between the interface and AI provider.
+- `FakeIncidentAiService` supplies stable sample output during parallel work.
+- `IncidentRepository` holds the current prototype report in memory.
+
+### Build
+
+Open the repository root in Android Studio, allow Gradle to sync, then run the
+`app` configuration on an API 26 or newer emulator or Android device.
+
+From a Windows terminal, the verification command is:
+
+```powershell
+.\gradlew.bat testDebugUnitTest assembleDebug
+```
+
+The responder screen and dispatch status are simulations. The current build
+does not contact emergency services.
