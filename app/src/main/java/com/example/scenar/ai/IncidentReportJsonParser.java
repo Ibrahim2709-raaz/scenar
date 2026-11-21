@@ -1,4 +1,4 @@
 package com.example.scenar.ai;
 
-public class IncidentJsonParser {
+public class IncidentReportJsonParser {
 }

@@ -1,4 +1,7 @@
-package com.example.scenar.ai;
-
-public class RealIncidentAiService {
-}
+public RealIncidentAiService(
+        AiGateway gateway,
+        IncidentPromptBuilder promptBuilder,
+        IncidentReportJsonParser parser,
+        IncidentReportValidator validator,
+        IncidentAiService fallback
+)
