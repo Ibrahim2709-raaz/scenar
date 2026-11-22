@@ -6,12 +6,15 @@ public class IncidentReportValidator {
 
     public ValidationResult validate(IncidentReport report) {
         if (report == null) {
-            return ValidationResult.invalid("AI returned no report.");
+            return ValidationResult.invalid(
+                    "AI returned no incident report."
+            );
         }
 
-        if (report.getSummary() == null
-                || report.getSummary().trim().isEmpty()) {
-            return ValidationResult.invalid("Report summary is missing.");
+        if (isBlank(report.getSummary())) {
+            return ValidationResult.invalid(
+                    "The incident summary is missing."
+            );
         }
 
         if (report.getPeopleAffected() != null
@@ -24,16 +27,34 @@ public class IncidentReportValidator {
         if (report.getLatitude() != null
                 && (report.getLatitude() < -90
                 || report.getLatitude() > 90)) {
-            return ValidationResult.invalid("Latitude is invalid.");
+            return ValidationResult.invalid(
+                    "Latitude must be between -90 and 90."
+            );
         }
 
         if (report.getLongitude() != null
                 && (report.getLongitude() < -180
                 || report.getLongitude() > 180)) {
-            return ValidationResult.invalid("Longitude is invalid.");
+            return ValidationResult.invalid(
+                    "Longitude must be between -180 and 180."
+            );
+        }
+
+        if (report.getCriticalConditions() == null
+                || report.getHazards() == null
+                || report.getMedicalFlags() == null
+                || report.getMissingInformation() == null
+                || report.getUncertainties() == null) {
+            return ValidationResult.invalid(
+                    "One or more report lists are missing."
+            );
         }
 
         return ValidationResult.valid();
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
     }
 
     public static class ValidationResult {
