@@ -39,6 +39,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.scenar.ai.FakeIncidentAiService;
 import com.example.scenar.ai.IncidentAiService;
+import com.example.scenar.model.IncidentReport;
 import com.example.scenar.repository.IncidentRepository;
 
 import org.json.JSONException;
@@ -90,13 +91,13 @@ public final class VictimReportActivity extends Activity {
         }
     }
 
-    private record Export(ExportFormat format, VictimReportDraft.Report report, String summary,
+    private record Export(ExportFormat format, VictimReportDraft.Report report, String categoryLabel, String summary,
                           List<ReportPdf.Field> fields) {
         void writeTo(OutputStream output) throws IOException, JSONException {
             if (format == ExportFormat.PDF) {
                 ReportPdf.write(output, report.generatedAt(), summary, fields);
             } else {
-                String json = report.toJson(summary).toString(2) + "\n";
+                String json = report.toJson(categoryLabel, summary).toString(2) + "\n";
                 output.write(json.getBytes(StandardCharsets.UTF_8));
             }
         }
@@ -224,9 +225,8 @@ public final class VictimReportActivity extends Activity {
         TextView emergency = text("In an emergency?", 22, RED, true);
         ViewCompat.setAccessibilityHeading(emergency, true);
         add(help, emergency, 0);
-        add(help, text("For an emergency in Canada where 911 is available, call 911 directly.",
+        add(help, text("This is a practice flow. In a real emergency, contact your local emergency services.",
                 15, INK, false), 6);
-        add(help, button("Open 911 dialer", RED, Color.WHITE, this::openDialer), 12);
         add(content, help, 18);
         add(content, text("Describe what happened, add optional details, and review a draft.",
                 17, MUTED, false), 20);
@@ -309,6 +309,8 @@ public final class VictimReportActivity extends Activity {
         step("Step 3 of 3  ·  Check the draft for accuracy");
         LinearLayout facts = card(Color.WHITE);
         heading(facts, "Reported details");
+        add(facts, text("The demo may include simulated AI details. Review them before continuing.",
+                14, MUTED, false), 8);
         for (ReportPdf.Field field : reportFields()) {
             fact(facts, field.label(), field.displayValue());
         }
@@ -337,15 +339,32 @@ public final class VictimReportActivity extends Activity {
     private List<ReportPdf.Field> reportFields() {
         VictimReportDraft.Input input = draft.report.input();
         VictimReportDraft.MedicalProfile medical = input.medicalProfile();
+        IncidentReport reviewed = draft.report.toReviewedIncident(CATEGORY_LABELS[draft.category], draft.summary);
+        String coordinates = "";
+        if (input.coordinates() != null) {
+            coordinates = format(input.coordinates());
+        } else if (reviewed.getLatitude() != null && reviewed.getLongitude() != null) {
+            coordinates = format(new VictimReportDraft.Coordinates(
+                    reviewed.getLatitude(), reviewed.getLongitude(), null));
+        }
         return Arrays.asList(
-                new ReportPdf.Field("Incident type", CATEGORY_LABELS[draft.category]),
+                new ReportPdf.Field("Incident type", valueOrEmpty(reviewed.getIncidentType())),
                 new ReportPdf.Field("Original description", input.description()),
-                new ReportPdf.Field("Address or landmark", input.address()),
-                new ReportPdf.Field("Device coordinates",
-                        input.coordinates() == null ? "" : format(input.coordinates())),
+                new ReportPdf.Field("People affected", valueOrEmpty(reviewed.getPeopleAffected())),
+                new ReportPdf.Field("Critical conditions", String.join("\n", reviewed.getCriticalConditions())),
+                new ReportPdf.Field("Hazards", String.join("\n", reviewed.getHazards())),
+                new ReportPdf.Field("Address or landmark", valueOrEmpty(reviewed.getLocationDescription())),
+                new ReportPdf.Field("Coordinates", coordinates),
                 new ReportPdf.Field("Allergies", medical.allergies()),
                 new ReportPdf.Field("Medications", medical.medications()),
-                new ReportPdf.Field("Medical conditions or access needs", medical.conditions()));
+                new ReportPdf.Field("Medical conditions or access needs", medical.conditions()),
+                new ReportPdf.Field("Medical flags", String.join("\n", reviewed.getMedicalFlags())),
+                new ReportPdf.Field("Missing information", String.join("\n", reviewed.getMissingInformation())),
+                new ReportPdf.Field("Uncertainties", String.join("\n", reviewed.getUncertainties())));
+    }
+
+    private static String valueOrEmpty(Object value) {
+        return value == null ? "" : value.toString();
     }
 
     private void openResponderDemo() {
@@ -358,19 +377,9 @@ public final class VictimReportActivity extends Activity {
         finish();
     }
 
-    private void openDialer() {
-        try {
-            startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:911")));
-        } catch (ActivityNotFoundException | SecurityException error) {
-            new AlertDialog.Builder(this).setMessage("This device could not open a dialer. Use a phone to call 911.")
-                    .setPositiveButton("OK", null).show();
-        }
-    }
-
     private void startDictation() {
         Intent speech = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
                 .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                .putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-CA")
                 .putExtra(RecognizerIntent.EXTRA_PROMPT, "Describe the practice incident");
         try {
             startActivityForResult(speech, SPEECH_REQUEST);
@@ -465,7 +474,7 @@ public final class VictimReportActivity extends Activity {
     }
 
     private String format(VictimReportDraft.Coordinates point) {
-        String position = String.format(Locale.CANADA, "%.5f, %.5f",
+        String position = String.format(Locale.ROOT, "%.5f, %.5f",
                 point.latitude(), point.longitude());
         return point.accuracyMeters() == null ? position
                 : position + " · accuracy about " + Math.round(point.accuracyMeters()) + " m";
@@ -553,7 +562,8 @@ public final class VictimReportActivity extends Activity {
         String summary = validatedSummary();
         if (summary == null) return;
         try {
-            draft.pendingExport = new Export(format, draft.report, summary, reportFields());
+            draft.pendingExport = new Export(format, draft.report, CATEGORY_LABELS[draft.category],
+                    summary, reportFields());
             showExportStatus("");
             startActivityForResult(new Intent(Intent.ACTION_CREATE_DOCUMENT)
                     .addCategory(Intent.CATEGORY_OPENABLE).setType(format.mimeType)
@@ -687,9 +697,6 @@ public final class VictimReportActivity extends Activity {
         add(content, view, 16);
         ViewCompat.setAccessibilityPaneTitle(content, words);
         setTitle(words + " · SCENAR");
-        if (draft.screen != Screen.HOME) {
-            add(content, button("Open 911 dialer", PEACH, RED, this::openDialer), 10);
-        }
     }
 
     private void step(String words) {

@@ -3,6 +3,7 @@ package com.example.scenar.ui.victim;
 import com.example.scenar.ai.IncidentAiService;
 import com.example.scenar.model.IncidentReport;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -15,9 +16,13 @@ final class VictimReportDraft {
     record MedicalProfile(String allergies, String medications, String conditions) {}
     record Input(String category, String description, String address,
                  Coordinates coordinates, MedicalProfile medicalProfile) {}
-    record Report(Input input, String summary, Instant generatedAt) {
+    record Report(Input input, IncidentReport structuredIncident, Instant generatedAt) {
+        String summary() {
+            return structuredIncident.getSummary();
+        }
+
         IncidentReport toReviewedIncident(String categoryLabel, String correctedSummary) {
-            IncidentReport reviewed = new IncidentReport();
+            IncidentReport reviewed = new IncidentReport(structuredIncident);
             if (!"unspecified".equals(input.category())) reviewed.setIncidentType(categoryLabel);
             reviewed.setSummary(correctedSummary);
             if (!input.address().isEmpty()) reviewed.setLocationDescription(input.address());
@@ -32,7 +37,7 @@ final class VictimReportDraft {
             return reviewed;
         }
 
-        JSONObject toJson(String correctedSummary) throws JSONException {
+        JSONObject toJson(String categoryLabel, String correctedSummary) throws JSONException {
             Coordinates point = input.coordinates();
             Object coordinates = point == null ? JSONObject.NULL : new JSONObject()
                     .put("latitude", point.latitude())
@@ -40,6 +45,7 @@ final class VictimReportDraft {
                     .put("accuracyMeters", point.accuracyMeters() == null
                             ? JSONObject.NULL : point.accuracyMeters());
             MedicalProfile profile = input.medicalProfile();
+            IncidentReport reviewed = toReviewedIncident(categoryLabel, correctedSummary);
             return new JSONObject()
                     .put("schemaVersion", 1)
                     .put("practiceMode", true)
@@ -51,7 +57,18 @@ final class VictimReportDraft {
                             .put("coordinates", coordinates))
                     .put("medicalProfile", new JSONObject().put("allergies", profile.allergies())
                             .put("medications", profile.medications())
-                            .put("conditions", profile.conditions()));
+                            .put("conditions", profile.conditions()))
+                    .put("structuredReport", new JSONObject()
+                            .put("incidentType", jsonValue(reviewed.getIncidentType()))
+                            .put("peopleAffected", jsonValue(reviewed.getPeopleAffected()))
+                            .put("criticalConditions", new JSONArray(reviewed.getCriticalConditions()))
+                            .put("hazards", new JSONArray(reviewed.getHazards()))
+                            .put("locationDescription", jsonValue(reviewed.getLocationDescription()))
+                            .put("latitude", jsonValue(reviewed.getLatitude()))
+                            .put("longitude", jsonValue(reviewed.getLongitude()))
+                            .put("medicalFlags", new JSONArray(reviewed.getMedicalFlags()))
+                            .put("missingInformation", new JSONArray(reviewed.getMissingInformation()))
+                            .put("uncertainties", new JSONArray(reviewed.getUncertainties())));
         }
     }
 
@@ -61,12 +78,11 @@ final class VictimReportDraft {
                 new IncidentAiService.IncidentCallback() {
                     @Override
                     public void onSuccess(IncidentReport report) {
-                        // The practice service includes illustrative facts. Use only its summary.
                         if (report == null) {
                             result.completeExceptionally(new IllegalArgumentException("Report was missing"));
                             return;
                         }
-                        result.complete(new Report(input, report.getSummary(), Instant.now()));
+                        result.complete(new Report(input, new IncidentReport(report), Instant.now()));
                     }
 
                     @Override
@@ -81,7 +97,13 @@ final class VictimReportDraft {
     }
 
     private static void addMedicalFlag(List<String> flags, String label, String value) {
-        if (!value.isEmpty()) flags.add(label + ": " + value);
+        if (value.isEmpty()) return;
+        String flag = label + ": " + value;
+        if (!flags.contains(flag)) flags.add(flag);
+    }
+
+    private static Object jsonValue(Object value) {
+        return value == null ? JSONObject.NULL : value;
     }
 
     private VictimReportDraft() {}

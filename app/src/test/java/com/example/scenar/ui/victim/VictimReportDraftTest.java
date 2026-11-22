@@ -10,11 +10,12 @@ import com.example.scenar.model.IncidentReport;
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 public class VictimReportDraftTest {
     @Test
-    public void handoffUsesReviewedFactsWithoutMockExamples() throws Exception {
+    public void handoffPreservesStructuredSimulationAndUserCorrections() throws Exception {
         VictimReportDraft.Input input = new VictimReportDraft.Input(
                 "injury", "Someone slipped.", "Practice Park",
                 new VictimReportDraft.Coordinates(50.5, -120.5, 12f),
@@ -31,9 +32,12 @@ public class VictimReportDraftTest {
         assertEquals(Double.valueOf(-120.5), reviewed.getLongitude());
         assertEquals(Collections.singletonList("Conditions or access needs: Needs step-free access"),
                 reviewed.getMedicalFlags());
-        assertNull(reviewed.getPeopleAffected());
-        assertTrue(reviewed.getHazards().isEmpty());
-        assertTrue(reviewed.getCriticalConditions().isEmpty());
+        assertEquals(Integer.valueOf(2), reviewed.getPeopleAffected());
+        assertEquals(Collections.singletonList("Smoke reported nearby"), reviewed.getHazards());
+        assertEquals(Collections.singletonList("One person may be unresponsive"), reviewed.getCriticalConditions());
+        assertEquals(Collections.singletonList("Confirm the exact location"), reviewed.getMissingInformation());
+        assertEquals(Collections.singletonList("Number of affected people requires confirmation"),
+                reviewed.getUncertainties());
     }
 
     @Test
@@ -42,7 +46,11 @@ public class VictimReportDraftTest {
                 "unspecified", "Details unavailable.", "", null,
                 new VictimReportDraft.MedicalProfile("", "", ""));
         VictimReportDraft.Report draft = VictimReportDraft
-                .generateIncidentReport(input, new FakeIncidentAiService())
+                .generateIncidentReport(input, (description, callback) -> {
+                    IncidentReport unstructured = new IncidentReport();
+                    unstructured.setSummary(description);
+                    callback.onSuccess(unstructured);
+                })
                 .get(5, TimeUnit.SECONDS);
 
         IncidentReport reviewed = draft.toReviewedIncident("Unsure or not specified", draft.summary());
@@ -51,5 +59,35 @@ public class VictimReportDraftTest {
         assertNull(reviewed.getLatitude());
         assertNull(reviewed.getLongitude());
         assertTrue(reviewed.getMedicalFlags().isEmpty());
+    }
+
+    @Test
+    public void handoffKeepsAiLocationAndMedicalFlagsWhenUserDidNotOverrideThem() throws Exception {
+        IncidentReport ai = new IncidentReport();
+        ai.setSummary("Initial summary.");
+        ai.setIncidentType("Fire");
+        ai.setLocationDescription("East loading bay");
+        ai.setLatitude(25.5);
+        ai.setLongitude(55.5);
+        ai.setMedicalFlags(Collections.singletonList("Possible smoke exposure"));
+        VictimReportDraft.Input input = new VictimReportDraft.Input(
+                "unspecified", "Smoke at the east loading bay.", "", null,
+                new VictimReportDraft.MedicalProfile("Latex", "", ""));
+
+        VictimReportDraft.Report draft = VictimReportDraft
+                .generateIncidentReport(input, (description, callback) -> callback.onSuccess(ai))
+                .get(5, TimeUnit.SECONDS);
+        ai.getMedicalFlags().clear();
+
+        IncidentReport reviewed = draft.toReviewedIncident("Unsure or not specified", "Reviewed summary.");
+        assertEquals("Fire", reviewed.getIncidentType());
+        assertEquals("East loading bay", reviewed.getLocationDescription());
+        assertEquals(Double.valueOf(25.5), reviewed.getLatitude());
+        assertEquals(Double.valueOf(55.5), reviewed.getLongitude());
+        assertEquals(Arrays.asList("Possible smoke exposure", "Allergies: Latex"), reviewed.getMedicalFlags());
+        reviewed.getMedicalFlags().clear();
+        assertEquals(2, draft.toReviewedIncident("Unsure or not specified", "Reviewed summary.")
+                .getMedicalFlags().size());
+        assertEquals("Initial summary.", draft.summary());
     }
 }
