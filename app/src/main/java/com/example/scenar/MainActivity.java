@@ -1,7 +1,10 @@
 package com.example.scenar;
 
+import android.content.Intent;
 import android.os.Bundle;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -10,11 +13,16 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.scenar.ui.home.HomeFragment;
-import com.example.scenar.ui.report.ReportFragment;
 import com.example.scenar.ui.responder.ResponderFragment;
 import com.example.scenar.ui.review.ReviewFragment;
+import com.example.scenar.ui.victim.VictimReportActivity;
 
 public class MainActivity extends AppCompatActivity {
+    private final ActivityResultLauncher<Intent> victimReporter = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK) showResponderDashboard();
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void showReport() {
-        navigateTo(new ReportFragment(), true);
+        victimReporter.launch(new Intent(this, VictimReportActivity.class));
     }
 
     public void showReview() {

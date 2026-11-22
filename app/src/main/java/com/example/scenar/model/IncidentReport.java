@@ -22,6 +22,22 @@ public class IncidentReport implements Serializable {
     private List<String> missingInformation = new ArrayList<>();
     private List<String> uncertainties = new ArrayList<>();
 
+    public IncidentReport() {}
+
+    public IncidentReport(IncidentReport source) {
+        incidentType = source.incidentType;
+        summary = source.summary;
+        peopleAffected = source.peopleAffected;
+        criticalConditions = nonNullList(source.criticalConditions);
+        hazards = nonNullList(source.hazards);
+        locationDescription = source.locationDescription;
+        latitude = source.latitude;
+        longitude = source.longitude;
+        medicalFlags = nonNullList(source.medicalFlags);
+        missingInformation = nonNullList(source.missingInformation);
+        uncertainties = nonNullList(source.uncertainties);
+    }
+
     public String getIncidentType() {
         return incidentType;
     }

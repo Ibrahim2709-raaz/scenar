@@ -15,6 +15,10 @@
     <string name="people_affected">People affected</string>
     <string name="location">Location</string>
     <string name="hazards">Hazards</string>
+    <string name="critical_conditions">Critical conditions</string>
+    <string name="medical_flags">Medical flags</string>
+    <string name="uncertainties">Uncertainties</string>
+    <string name="coordinates">Coordinates</string>
     <string name="missing_information">Missing information</string>
     <string name="confirm_report">Confirm and preview dispatch</string>
     <string name="responder_title">Responder incident view</string>
