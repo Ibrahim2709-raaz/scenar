@@ -10,7 +10,8 @@ public class DeterministicIncidentService
             String description,
             IncidentCallback callback
     ) {
-        if (description == null || description.trim().isEmpty()) {
+        if (description == null
+                || description.trim().isEmpty()) {
             callback.onFailure(
                     "Describe what happened before continuing."
             );
@@ -18,6 +19,8 @@ public class DeterministicIncidentService
         }
 
         IncidentReport report = new IncidentReport();
+
+        // Preserve only information explicitly supplied by the user.
         report.setSummary(description.trim());
 
         report.getMissingInformation().add(
@@ -31,6 +34,11 @@ public class DeterministicIncidentService
         );
         report.getMissingInformation().add(
                 "Confirm injuries and immediate hazards"
+        );
+
+        report.getUncertainties().add(
+                "AI structuring was unavailable; "
+                        + "the original description was preserved."
         );
 
         callback.onSuccess(report);
