@@ -672,6 +672,7 @@ public final class VictimReportActivity extends Activity {
             draft.report = report;
             draft.review = new IncidentReview(
                     report.toReviewedIncident(CATEGORY_LABELS[draft.category], report.summary()));
+            draft.shareLocation = false;
             draft.shareMedicalFlags = false;
             draft.simulateContactNotification = false;
             go(Screen.REVIEW);

@@ -9,6 +9,7 @@ import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.intent.Intents.intended;
 import static androidx.test.espresso.intent.Intents.intending;
 import static androidx.test.espresso.intent.matcher.IntentMatchers.hasAction;
+import static androidx.test.espresso.matcher.ViewMatchers.isChecked;
 import static androidx.test.espresso.matcher.ViewMatchers.isEnabled;
 import static androidx.test.espresso.matcher.ViewMatchers.withHint;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
@@ -178,6 +179,35 @@ public class VictimReportFlowTest {
             onView(withId(R.id.btn_simulate_notification)).check(matches(isEnabled()));
         } finally {
             clearHandoff();
+        }
+    }
+
+    @Test
+    public void regeneratingEditedReportClearsAllHandoffConsent() {
+        String[] consentLabels = {
+                "Include reviewed location",
+                "Include reviewed medical flags",
+                "Allow simulated trusted-contact notifications"
+        };
+        try (ActivityScenario<VictimReportActivity> scenario =
+                     ActivityScenario.launch(VictimReportActivity.class)) {
+            enterDescription();
+            tap("Continue");
+            tap("Generate practice report");
+            visible("Review your report");
+            for (String label : consentLabels) {
+                tap(label);
+                onView(withText(label)).check(matches(isChecked()));
+            }
+
+            tap("Edit incident details");
+            onView(withHint("Street, room, or nearby landmark"))
+                    .perform(scrollTo(), replaceText("Updated Practice Hall"), closeSoftKeyboard());
+            tap("Generate practice report");
+            visible("Review your report");
+            for (String label : consentLabels) {
+                onView(withText(label)).perform(scrollTo()).check(matches(not(isChecked())));
+            }
         }
     }
 
