@@ -20,21 +20,36 @@ public class HomeFragment extends Fragment {
             @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState
     ) {
-        return inflater.inflate(R.layout.fragment_home, container, false);
+        return inflater.inflate(
+                R.layout.fragment_home,
+                container,
+                false
+        );
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(
+            @NonNull View view,
+            @Nullable Bundle savedInstanceState
+    ) {
         super.onViewCreated(view, savedInstanceState);
-        view.findViewById(R.id.report_emergency_button).setOnClickListener(ignored ->
-                ((MainActivity) requireActivity()).showReport()
-        );
 
-        View responderBtn = view.findViewById(R.id.open_responder_button);
-        if (responderBtn != null) {
-            responderBtn.setOnClickListener(ignored ->
-                    ((MainActivity) requireActivity()).showResponderDashboard()
-            );
-        }
+        MainActivity activity =
+                (MainActivity) requireActivity();
+
+        view.findViewById(R.id.report_emergency_button)
+                .setOnClickListener(
+                        ignored -> activity.showReport()
+                );
+
+        view.findViewById(R.id.open_responder_button)
+                .setOnClickListener(
+                        ignored -> activity.showResponderDashboard()
+                );
+
+        view.findViewById(R.id.open_beacon_demo_button)
+                .setOnClickListener(
+                        ignored -> activity.showBeaconDemo()
+                );
     }
 }

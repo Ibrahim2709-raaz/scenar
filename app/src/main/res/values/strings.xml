@@ -67,4 +67,39 @@
     <string name="demo_recipients">Demo recipients (fictional): Demo Contact A (555-0199) and a demo mutual aid desk</string>
     <string name="ble_preview_title">BLE payload preview (simulation only)</string>
     <string name="ble_preview_note">Preview only. Bluetooth is not used and nothing is transmitted.</string>
+    <!-- Offline BLE rescue demo -->
+    <string name="open_beacon_demo">Offline Rescue Beacon</string>
+    <string name="offline_beacon_title">Offline Rescue Beacon</string>
+    <string name="offline_beacon_description">Broadcast or detect an anonymous emergency beacon when internet access is unavailable.</string>
+    <string name="beacon_simulation_warning">HACKATHON SIMULATION — THIS DOES NOT CONTACT REAL EMERGENCY SERVICES</string>
+
+    <string name="victim_beacon_section">Victim beacon</string>
+    <string name="victim_beacon_description">Broadcasts a rotating anonymous identifier every five seconds. The current report location is included only when available.</string>
+    <string name="start_emergency_beacon">Start emergency beacon</string>
+    <string name="stop_emergency_beacon">Stop beacon</string>
+    <string name="beacon_starting">Starting Bluetooth beacon…</string>
+    <string name="beacon_active">Emergency beacon is broadcasting.</string>
+    <string name="beacon_payload_updated">Beacon payload updated.</string>
+    <string name="beacon_stopping">Stopping Bluetooth beacon…</string>
+    <string name="beacon_stopped">Beacon is stopped.</string>
+    <string name="beacon_failed">The Bluetooth beacon could not start.</string>
+    <string name="beacon_already_active">The beacon is already active.</string>
+    <string name="beacon_permission_denied">Bluetooth advertising permission was denied.</string>
+    <string name="beacon_without_location">No reviewed GPS location is available. The beacon will contain only an anonymous victim ID.</string>
+    <string name="beacon_with_report_location">The reviewed incident coordinates will be included in the beacon.</string>
+
+    <string name="responder_scanner_section">Responder scanner</string>
+    <string name="responder_scanner_description">Scans for nearby SCENAR rescue beacons and displays the anonymous ID, coordinates and signal strength.</string>
+    <string name="start_responder_scan">Start responder scan</string>
+    <string name="stop_responder_scan">Stop scan</string>
+    <string name="scan_starting">Starting Bluetooth scan…</string>
+    <string name="scan_active">Scanning for nearby rescue beacons…</string>
+    <string name="scan_stopped">Scanner is stopped.</string>
+    <string name="scan_already_active">The responder scanner is already active.</string>
+    <string name="scan_permission_denied">Bluetooth scanning permission was denied.</string>
+    <string name="scan_failed">The Bluetooth scanner could not start.</string>
+    <string name="beacon_detected">Nearby rescue beacon detected.</string>
+    <string name="no_beacon_received">No rescue beacon has been received yet.</string>
+    <string name="packet_rejected">An invalid or expired beacon packet was rejected.</string>
+
 </resources>
