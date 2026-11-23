@@ -1,7 +1,32 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.SCENAR" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Base.Theme.SCENAR" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/scenar_blue</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimaryContainer">@color/scenar_blue_light</item>
+        <item name="colorOnPrimaryContainer">@color/scenar_navy</item>
+
+        <item name="colorSecondary">@color/scenar_teal</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="colorSecondaryContainer">@color/scenar_teal_light</item>
+        <item name="colorOnSecondaryContainer">@color/scenar_navy</item>
+
+        <item name="colorSurface">@color/scenar_surface</item>
+        <item name="colorOnSurface">@color/scenar_text_primary</item>
+        <item name="colorSurfaceVariant">@color/scenar_surface_alt</item>
+        <item name="colorOnSurfaceVariant">@color/scenar_text_secondary</item>
+        <item name="colorOutline">@color/scenar_border</item>
+
+        <item name="colorError">@color/scenar_emergency</item>
+        <item name="colorOnError">@color/white</item>
+
+        <item name="android:colorBackground">@color/scenar_background</item>
+        <item name="android:windowBackground">@color/scenar_background</item>
+        <item name="android:statusBarColor">@color/scenar_background</item>
+        <item name="android:navigationBarColor">@color/scenar_background</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
     </style>
+
 </resources>

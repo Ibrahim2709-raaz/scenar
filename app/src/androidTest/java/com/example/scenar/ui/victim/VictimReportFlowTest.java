@@ -108,7 +108,7 @@ public class VictimReportFlowTest {
         intending(hasAction(Intent.ACTION_CREATE_DOCUMENT))
                 .respondWith(new Instrumentation.ActivityResult(Activity.RESULT_CANCELED, null));
         try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
-            onView(withText("Report emergency")).perform(click());
+            onView(withId(R.id.report_emergency_button)).perform(click());
             enterDescription();
             tap("Continue");
             tap("Generate practice report");
@@ -153,7 +153,7 @@ public class VictimReportFlowTest {
     @Test
     public void selectedVictimConsentReachesResponderAndEnablesContactSimulation() {
         try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
-            onView(withText("Report emergency")).perform(click());
+            onView(withId(R.id.report_emergency_button)).perform(click());
             enterDescription();
             tap("Continue");
             tap("Generate practice report");
