@@ -56,4 +56,5 @@ dependencies {
     androidTestImplementation(libs.ui.automator)
     androidTestImplementation(libs.ext.junit)
     implementation(libs.gson)
+    implementation("androidx.core:core-splashscreen:1.0.1")
 }
