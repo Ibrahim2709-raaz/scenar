@@ -35,19 +35,23 @@
     <string name="status_timeline_label">Dispatch Timeline &amp; Audit Log</string>
     <string name="add_note">Add Field Note</string>
     <string name="note_hint">Enter responder on-scene note...</string>
-    <string name="open_navigation">Navigate in Google Maps</string>
+    <string name="open_navigation">Open External Directions (Incident Location)</string>
     <string name="copy_coordinates">Copy Coordinates</string>
     <string name="coordinates_copied">Coordinates copied to clipboard</string>
-    <string name="contact_notification_title">Automated Contact Notification Simulation</string>
-    <string name="contact_notification_desc">Simulates automated SMS dispatch alerts to designated ICE contacts and mutual aid agencies.</string>
+    <string name="contact_notification_title">Simulated Contact Notification (V3)</string>
+    <string name="contact_notification_desc">Simulated emergency alert log dispatched to ICE emergency contacts upon status change. (Internal simulation only — no real SMS or cellular transmission occurs).</string>
     <string name="simulate_notification_button">Simulate Alert Broadcast</string>
-    <string name="simulated_notification_success">Alert broadcast simulated! 3 recipients notified via SMS gateway.</string>
-    <string name="experiments_title">Milestone Experiments (V4 &amp; V5)</string>
-    <string name="routing_experiment_title">V4: Nearest Facility &amp; Route Guidance</string>
-    <string name="ble_experiment_title">V5: Offline BLE Rescue Beacon</string>
-    <string name="toggle_ble_beacon">Toggle BLE Rescue Beacon</string>
+    <string name="simulated_notification_success">Alert broadcast simulated! 3 recipients notified in simulation log.</string>
     <string name="load_sample_json">Load Sample JSON</string>
     <string name="json_view_title">Interoperability JSON Contract</string>
     <string name="copy_json">Copy JSON</string>
     <string name="json_copied">JSON copied to clipboard</string>
+
+    <!-- V3 & V4 Strict Boundary Extensions -->
+    <string name="simulated_dispatch_banner">SIMULATED DISPATCH ONLY — NO REAL EMERGENCY SERVICES CONTACTED</string>
+    <string name="facility_routing_title">Emergency Facility Routing (V4)</string>
+    <string name="facility_disclaimer">Curated facility reference only. Does not claim live bed, ambulance, or treatment availability.</string>
+    <string name="open_facility_directions">Open External Directions to Selected Facility</string>
+    <string name="missing_coordinates_warning">Coordinates Unavailable: Exact GPS coordinates were not transmitted. Location is provided as text only.</string>
+    <string name="search_address_external">Search Address in External Maps</string>
 </resources>

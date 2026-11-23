@@ -12,6 +12,34 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Prominent Simulation Banner (V3 / V4 Rule) -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            app:cardBackgroundColor="#FEF2F2"
+            app:cardCornerRadius="8dp"
+            app:strokeColor="#FCA5A5"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="@string/simulated_dispatch_banner"
+                    android:textColor="#DC2626"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- Header Bar -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
@@ -253,7 +281,7 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Status Lifecycle & Dispatch Stepper Card -->
+        <!-- Status Lifecycle & Dispatch Controls (V3 Requirement) -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -280,7 +308,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Live Dispatch Status"
+                        android:text="Simulated Dispatch Controls"
                         android:textColor="@color/responder_text_primary"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -304,14 +332,61 @@
                     android:layout_marginTop="12dp"
                     android:orientation="horizontal" />
 
-                <!-- Action Button to Advance -->
+                <!-- Direct Status Action Buttons (V3 Requirement: review, dispatch, and closure controls) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_status_dispatch"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="0dp"
+                        android:layout_height="44dp"
+                        android:layout_marginEnd="4dp"
+                        android:layout_weight="1"
+                        android:text="Dispatch"
+                        android:textSize="12sp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_status_en_route"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="0dp"
+                        android:layout_height="44dp"
+                        android:layout_marginEnd="4dp"
+                        android:layout_weight="1"
+                        android:text="En Route"
+                        android:textSize="12sp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_status_on_scene"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="0dp"
+                        android:layout_height="44dp"
+                        android:layout_marginEnd="4dp"
+                        android:layout_weight="1"
+                        android:text="On Scene"
+                        android:textSize="12sp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_status_close"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="44dp"
+                        android:layout_weight="1"
+                        android:text="Close"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <!-- Advance Next Button -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_advance_status"
                     android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:layout_marginTop="14dp"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="8dp"
                     android:text="@string/advance_status"
-                    android:textSize="15sp" />
+                    android:textSize="14sp" />
 
                 <!-- Note Input -->
                 <LinearLayout
@@ -363,7 +438,7 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Tactical Map & Location Section -->
+        <!-- Incident-Location Map & Missing-Coordinate Fallback (V4 Requirement) -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -383,7 +458,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Tactical Map &amp; Navigation"
+                    android:text="Incident Location &amp; Map (V4)"
                     android:textColor="@color/responder_text_primary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
@@ -397,6 +472,52 @@
                     android:textColor="@color/responder_text_secondary"
                     android:textSize="12sp" />
 
+                <!-- Missing-Coordinate Fallback View (V4 Requirement) -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/missing_coordinates_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:visibility="gone"
+                    app:cardBackgroundColor="#FEF3C7"
+                    app:cardCornerRadius="8dp"
+                    app:strokeColor="#F59E0B"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="⚠️ Coordinates Unavailable"
+                            android:textColor="#B45309"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/missing_coordinates_desc"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/missing_coordinates_warning"
+                            android:textColor="#78350F"
+                            android:textSize="12sp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_search_address_external"
+                            style="@style/Widget.Material3.Button.TonalButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="44dp"
+                            android:layout_marginTop="10dp"
+                            android:text="@string/search_address_external"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
                 <!-- Custom Tactical Canvas Radar View -->
                 <com.example.scenar.ui.responder.TacticalMapView
                     android:id="@+id/tactical_map_view"
@@ -405,6 +526,7 @@
                     android:layout_marginTop="10dp" />
 
                 <LinearLayout
+                    android:id="@+id/map_actions_container"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
@@ -416,7 +538,7 @@
                         android:layout_height="48dp"
                         android:layout_weight="1"
                         android:text="@string/open_navigation"
-                        android:textSize="13sp" />
+                        android:textSize="12sp" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_copy_coordinates"
@@ -425,13 +547,100 @@
                         android:layout_height="48dp"
                         android:layout_marginStart="8dp"
                         android:text="@string/copy_coordinates"
-                        android:textSize="13sp" />
+                        android:textSize="12sp" />
                 </LinearLayout>
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Automated Contact-Notification Simulation (V3 Milestone) -->
+        <!-- Facility Discovery, Selection & Routing (V4 Requirement) -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardBackgroundColor="@color/white"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:strokeColor="@color/responder_border"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/facility_routing_title"
+                    android:textColor="@color/responder_text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="@string/facility_disclaimer"
+                    android:textColor="@color/responder_text_secondary"
+                    android:textSize="11sp" />
+
+                <!-- Active Destination Selection Status -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    app:cardBackgroundColor="#F0FDF4"
+                    app:cardCornerRadius="8dp"
+                    app:strokeColor="#86EFAC"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="10dp">
+
+                        <TextView
+                            android:id="@+id/selected_destination_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Selected Destination: Metropolitan Trauma Center &amp; ER"
+                            android:textColor="#166534"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_route_to_selected_facility"
+                            android:layout_width="match_parent"
+                            android:layout_height="44dp"
+                            android:layout_marginTop="8dp"
+                            android:text="@string/open_facility_directions"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="Tap to select destination facility:"
+                    android:textColor="@color/responder_text_secondary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:id="@+id/routing_facilities_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:orientation="vertical" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Simulated Contact Notification (V3 Requirement) -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -462,9 +671,9 @@
                     android:layout_marginTop="4dp"
                     android:text="@string/contact_notification_desc"
                     android:textColor="@color/responder_text_secondary"
-                    android:textSize="12sp" />
+                    android:textSize="11sp" />
 
-                <!-- Notification Alert Preview Box -->
+                <!-- Alert Preview Box -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -483,7 +692,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Recipients: (1) Emergency Contact: Jane Doe (+1 555-0199) | (2) Fire Station 4 | (3) EMS Dispatch"
+                            android:text="Recipients: (1) Emergency Contact: Jane Doe (+1 555-0199) | (2) Mutual Aid Unit"
                             android:textColor="#334155"
                             android:textSize="12sp"
                             android:textStyle="bold" />
@@ -493,7 +702,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
-                            android:text="[SCENAR ALERT] Status EN ROUTE: Emergency reported at Building B, room 204. Responders in transit. Please stand by."
+                            android:text="[SCENAR SIMULATED ALERT] Status EN ROUTE: Emergency reported at Building B, room 204. Responders in transit. Please stand by."
                             android:textColor="#475569"
                             android:textSize="13sp" />
                     </LinearLayout>
@@ -528,118 +737,7 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Experiments Section (V4 Routing & V5 Bluetooth Rescue Mesh) -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:cardBackgroundColor="@color/white"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="2dp"
-            app:strokeColor="@color/responder_border"
-            app:strokeWidth="1dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/experiments_title"
-                    android:textColor="@color/responder_text_primary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <!-- V4 Routing Experiment -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:text="@string/routing_experiment_title"
-                    android:textColor="@color/responder_accent"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <LinearLayout
-                    android:id="@+id/routing_facilities_container"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:orientation="vertical" />
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginVertical="12dp"
-                    android:background="#E2E8F0" />
-
-                <!-- V5 BLE Rescue Beacon Experiment -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/ble_experiment_title"
-                    android:textColor="@color/responder_accent"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="Zero-infrastructure disaster mode: broadcasts compact incident distress packets over Bluetooth Low Energy mesh."
-                    android:textColor="@color/responder_text_secondary"
-                    android:textSize="12sp" />
-
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    app:cardBackgroundColor="#0F172A"
-                    app:cardCornerRadius="8dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="12dp">
-
-                        <TextView
-                            android:id="@+id/ble_beacon_status"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="BLE BEACON: STANDBY (Ready)"
-                            android:textColor="#38BDF8"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/ble_beacon_details"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:fontFamily="monospace"
-                            android:text="UUID: 0000FEAA-0000-1000-8000-00805F9B34FB\nPacket size: 98 bytes | Mesh Hop: 1 | RSSI: -68 dBm"
-                            android:textColor="#94A3B8"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_toggle_ble"
-                    style="@style/Widget.Material3.Button.OutlinedButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_marginTop="10dp"
-                    android:text="@string/toggle_ble_beacon"
-                    android:textSize="13sp" />
-
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Interoperability JSON Viewer -->
+        <!-- Interoperability JSON Contract Viewer -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

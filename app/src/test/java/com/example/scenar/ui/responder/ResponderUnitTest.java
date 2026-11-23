@@ -3,14 +3,13 @@ package com.example.scenar.ui.responder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.example.scenar.model.IncidentReport;
 
 import org.json.JSONException;
 import org.junit.Test;
-
-import java.util.List;
 
 public class ResponderUnitTest {
 
@@ -35,6 +34,21 @@ public class ResponderUnitTest {
     }
 
     @Test
+    public void testDirectStatusUpdates() {
+        IncidentReport report = SampleIncidentProvider.getCanonicalSampleReport();
+        ResponderIncident incident = new ResponderIncident("INC-TEST-002", report, "12:00");
+
+        incident.setStatus(IncidentStatus.EN_ROUTE);
+        assertEquals(IncidentStatus.EN_ROUTE, incident.getStatus());
+
+        incident.setStatus(IncidentStatus.ON_SCENE);
+        assertEquals(IncidentStatus.ON_SCENE, incident.getStatus());
+
+        incident.setStatus(IncidentStatus.RESOLVED);
+        assertEquals(IncidentStatus.RESOLVED, incident.getStatus());
+    }
+
+    @Test
     public void testPriorityCalculation() {
         IncidentReport report = new IncidentReport();
         report.getCriticalConditions().add("Unresponsive victim");
@@ -47,6 +61,21 @@ public class ResponderUnitTest {
         IncidentReport mediumReport = new IncidentReport();
         mediumReport.setPeopleAffected(1);
         assertEquals(PriorityLevel.MEDIUM, PriorityLevel.calculate(mediumReport));
+    }
+
+    @Test
+    public void testSafeEmptyAndUnknownInformationStates() {
+        // Test handling of completely empty report
+        IncidentReport emptyReport = new IncidentReport();
+        ResponderIncident incident = new ResponderIncident("INC-EMPTY", emptyReport, "00:00");
+
+        assertNotNull(incident);
+        assertNull(incident.getReport().getLatitude());
+        assertNull(incident.getReport().getLongitude());
+        assertTrue(incident.getReport().getCriticalConditions().isEmpty());
+        assertTrue(incident.getReport().getHazards().isEmpty());
+        assertTrue(incident.getReport().getMedicalFlags().isEmpty());
+        assertEquals(PriorityLevel.MEDIUM, incident.getPriority());
     }
 
     @Test
@@ -118,22 +147,5 @@ public class ResponderUnitTest {
 
         int eta = facility.etaMinutes(37.77492, -122.41941);
         assertTrue("ETA should be between 1 and 15 mins", eta >= 1 && eta <= 15);
-    }
-
-    @Test
-    public void testBleRescuePacket() {
-        IncidentReport report = SampleIncidentProvider.getCanonicalSampleReport();
-        BleRescuePacket packet = BleRescuePacket.fromReport("8842", report);
-
-        assertNotNull(packet.getBeaconId());
-        assertTrue(packet.getBeaconId().contains("8842"));
-        assertFalse(packet.isBroadcasting());
-
-        packet.setBroadcasting(true);
-        assertTrue(packet.isBroadcasting());
-
-        String compact = packet.getCompactPayload();
-        assertTrue(compact.contains("\"b\":"));
-        assertTrue(packet.getPayloadByteSize() > 0 && packet.getPayloadByteSize() < 512);
     }
 }

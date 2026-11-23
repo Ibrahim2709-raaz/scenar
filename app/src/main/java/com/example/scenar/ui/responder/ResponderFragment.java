@@ -34,7 +34,7 @@ public class ResponderFragment extends Fragment {
 
     private List<ResponderIncident> incidentList;
     private ResponderIncident activeIncident;
-    private BleRescuePacket blePacket;
+    private NearbyFacility selectedFacility;
 
     @Nullable
     @Override
@@ -53,7 +53,9 @@ public class ResponderFragment extends Fragment {
         IncidentReport currentReport = IncidentRepository.getInstance().getCurrentReport();
         incidentList = SampleIncidentProvider.createDemoIncidents(currentReport);
         activeIncident = incidentList.get(0);
-        blePacket = BleRescuePacket.fromReport(activeIncident.getId(), activeIncident.getReport());
+
+        List<NearbyFacility> facilities = SampleIncidentProvider.getNearbyFacilities();
+        selectedFacility = facilities.isEmpty() ? null : facilities.get(0);
 
         setupQueueTabs(view);
         bindActiveIncident(view);
@@ -116,7 +118,6 @@ public class ResponderFragment extends Fragment {
             card.addView(content);
             card.setOnClickListener(v -> {
                 activeIncident = incident;
-                blePacket = BleRescuePacket.fromReport(activeIncident.getId(), activeIncident.getReport());
                 setupQueueTabs(root);
                 bindActiveIncident(root);
             });
@@ -137,7 +138,7 @@ public class ResponderFragment extends Fragment {
         priorityBadge.setBackgroundColor(activeIncident.getPriority().getBackgroundColor());
 
         setText(root, R.id.responder_incident_type, report.getIncidentType());
-        setText(root, R.id.responder_summary, report.getSummary());
+        setText(root, R.id.responder_summary, isBlank(report.getSummary()) ? "No incident summary provided." : report.getSummary());
 
         String peopleStr = report.getPeopleAffected() == null
                 ? "Unknown count"
@@ -146,11 +147,11 @@ public class ResponderFragment extends Fragment {
         setText(root, R.id.responder_time, activeIncident.getReceivedTime());
 
         String locationStr = isBlank(report.getLocationDescription())
-                ? "Location not confirmed"
+                ? "Location not specified / Unknown"
                 : report.getLocationDescription();
         setText(root, R.id.responder_location, locationStr);
 
-        // Structured alerts (Critical conditions, hazards, medical flags, missing info, uncertainties)
+        // Structured alerts (Critical conditions, hazards, consented medical flags, missing info, uncertainties)
         LinearLayout details = root.findViewById(R.id.responder_structured_details);
         details.removeAllViews();
 
@@ -164,18 +165,31 @@ public class ResponderFragment extends Fragment {
             addDetailCard(details, "🚨 Critical Conditions",
                     String.join("\n• ", report.getCriticalConditions()),
                     0xFFDC2626, 0xFFFEE2E2);
+        } else {
+            addDetailCard(details, "Critical Conditions",
+                    "No critical medical trauma or triage alerts flagged.",
+                    0xFF64748B, 0xFFF8FAFC);
         }
 
         if (!report.getHazards().isEmpty()) {
             addDetailCard(details, "⚠️ Scene Hazards",
                     String.join("\n• ", report.getHazards()),
                     0xFFD97706, 0xFFFEF3C7);
+        } else {
+            addDetailCard(details, "Scene Hazards",
+                    "No environmental or structural hazards reported.",
+                    0xFF64748B, 0xFFF8FAFC);
         }
 
+        // V3 Requirement: Show only consented medical information
         if (!report.getMedicalFlags().isEmpty()) {
-            addDetailCard(details, "🛡️ Medical Flags (Consented by Patient)",
-                    String.join("\n• ", report.getMedicalFlags()),
+            addDetailCard(details, "🛡️ Medical Profile (Patient-Consented Only)",
+                    String.join("\n• ", report.getMedicalFlags()) + "\n\n✓ User consent verified prior to dispatch transmission.",
                     0xFF0D9488, 0xFFCCFBF1);
+        } else {
+            addDetailCard(details, "🛡️ Medical Profile",
+                    "No consented medical information shared by caller.\n(Protected by patient consent controls)",
+                    0xFF64748B, 0xFFF8FAFC);
         }
 
         if (!report.getMissingInformation().isEmpty()) {
@@ -193,26 +207,52 @@ public class ResponderFragment extends Fragment {
         // Status Stepper & Pill
         updateStatusViews(root);
 
-        // Tactical Map View
-        TacticalMapView mapView = root.findViewById(R.id.tactical_map_view);
-        double lat = report.getLatitude() != null ? report.getLatitude() : 37.77492;
-        double lng = report.getLongitude() != null ? report.getLongitude() : -122.41941;
-        mapView.setLocation(lat, lng, report.getLocationDescription() != null ? report.getLocationDescription() : "Scene");
-        mapView.setDistanceKm(1.4);
-        setText(root, R.id.map_coordinates_text, String.format(Locale.ROOT, "GPS Target: %.5f, %.5f", lat, lng));
+        // V4 Requirement: Incident-location map & missing-coordinate fallback
+        bindMapAndLocation(root, report);
 
-        // Contact Notification Preview
+        // Simulated Contact Notification Preview
         updateNotificationPreview(root);
 
-        // Routing Facilities
-        bindRoutingFacilities(root, lat, lng);
+        // V4 Requirement: Facility discovery, destination selection & routing
+        double baseLat = report.getLatitude() != null ? report.getLatitude() : 37.77492;
+        double baseLng = report.getLongitude() != null ? report.getLongitude() : -122.41941;
+        bindRoutingFacilities(root, baseLat, baseLng);
 
-        // BLE Packet Preview
-        updateBleViews(root);
-
-        // JSON View
+        // Interoperability JSON View
         String json = SampleIncidentProvider.toJson(report);
         setText(root, R.id.json_preview_text, json);
+    }
+
+    private void bindMapAndLocation(View root, IncidentReport report) {
+        View missingCard = root.findViewById(R.id.missing_coordinates_card);
+        TacticalMapView mapView = root.findViewById(R.id.tactical_map_view);
+        View mapActions = root.findViewById(R.id.map_actions_container);
+        TextView coordText = root.findViewById(R.id.map_coordinates_text);
+
+        if (report.getLatitude() != null && report.getLongitude() != null) {
+            double lat = report.getLatitude();
+            double lng = report.getLongitude();
+
+            missingCard.setVisibility(View.GONE);
+            mapView.setVisibility(View.VISIBLE);
+            mapActions.setVisibility(View.VISIBLE);
+
+            mapView.setLocation(lat, lng, report.getLocationDescription() != null ? report.getLocationDescription() : "Scene");
+            mapView.setDistanceKm(1.4);
+            coordText.setText(String.format(Locale.ROOT, "GPS Target Lock: %.5f, %.5f", lat, lng));
+        } else {
+            // Safe missing-coordinate fallback (V4 Requirement)
+            mapView.setVisibility(View.GONE);
+            mapActions.setVisibility(View.GONE);
+            missingCard.setVisibility(View.VISIBLE);
+
+            String desc = isBlank(report.getLocationDescription())
+                    ? "No location description provided."
+                    : report.getLocationDescription();
+            TextView missingDesc = root.findViewById(R.id.missing_coordinates_desc);
+            missingDesc.setText("⚠️ Coordinates Unavailable: Exact GPS coordinates were not transmitted. Location is provided as text only: \"" + desc + "\"");
+            coordText.setText("GPS Status: Coordinates Missing (Fallback Mode)");
+        }
     }
 
     private void updateStatusViews(View root) {
@@ -294,14 +334,14 @@ public class ResponderFragment extends Fragment {
                 : "Reported Scene";
         String status = activeIncident.getStatus().getLabel();
         String message = String.format(Locale.ROOT,
-                "[SCENAR AUTO-ALERT] Emergency status updated to %s for %s. Dispatched unit: %s. Stand by for updates.",
+                "[SCENAR SIMULATED ALERT] Emergency status updated to %s for %s. Dispatched unit: %s. Stand by for updates.",
                 status, location, activeIncident.getAssignedUnit());
         preview.setText(message);
 
         TextView badge = root.findViewById(R.id.notification_status_badge);
         if (activeIncident.isContactNotificationSent()) {
             badge.setVisibility(View.VISIBLE);
-            badge.setText("✓ Automated Alerts Dispatched & Verified via Gateway");
+            badge.setText("✓ Simulated Alert Logged to Emergency Contacts (Internal Simulation Only)");
         } else {
             badge.setVisibility(View.GONE);
         }
@@ -323,7 +363,15 @@ public class ResponderFragment extends Fragment {
         container.removeAllViews();
 
         List<NearbyFacility> facilities = SampleIncidentProvider.getNearbyFacilities();
+        if (selectedFacility == null && !facilities.isEmpty()) {
+            selectedFacility = facilities.get(0);
+        }
+
+        updateSelectedDestinationBanner(root);
+
         for (NearbyFacility facility : facilities) {
+            boolean isSelected = facility == selectedFacility;
+
             MaterialCardView card = new MaterialCardView(requireContext());
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
@@ -332,63 +380,60 @@ public class ResponderFragment extends Fragment {
             lp.bottomMargin = dpToPx(8);
             card.setLayoutParams(lp);
             card.setRadius(dpToPx(8));
-            card.setCardBackgroundColor(0xFFF8FAFC);
-            card.setStrokeColor(0xFFE2E8F0);
             card.setStrokeWidth(dpToPx(1));
+
+            if (isSelected) {
+                card.setCardBackgroundColor(0xFFF0FDF4);
+                card.setStrokeColor(0xFF16A34A);
+            } else {
+                card.setCardBackgroundColor(0xFFF8FAFC);
+                card.setStrokeColor(0xFFE2E8F0);
+            }
 
             LinearLayout content = new LinearLayout(requireContext());
             content.setOrientation(LinearLayout.VERTICAL);
             content.setPadding(dpToPx(12), dpToPx(10), dpToPx(12), dpToPx(10));
 
             TextView name = new TextView(requireContext());
-            name.setText(facility.getName() + " (" + facility.getType() + ")");
+            name.setText((isSelected ? "◉ " : "○ ") + facility.getName() + " (" + facility.getType() + ")");
             name.setTextSize(13f);
             name.setTypeface(name.getTypeface(), Typeface.BOLD);
-            name.setTextColor(0xFF0F172A);
+            name.setTextColor(isSelected ? 0xFF166534 : 0xFF0F172A);
             content.addView(name);
 
             TextView dist = new TextView(requireContext());
-            dist.setText(String.format(Locale.ROOT, "Distance: %s • ETA: ~%d min • Emergency Phone: %s",
+            dist.setText(String.format(Locale.ROOT, "Approx. Distance: %s • Est. Transit: ~%d min • Emergency Phone: %s",
                     facility.getFormattedDistance(lat, lng),
                     facility.etaMinutes(lat, lng),
                     facility.getPhone()));
             dist.setTextSize(12f);
-            dist.setTextColor(0xFF0284C7);
+            dist.setTextColor(isSelected ? 0xFF15803D : 0xFF0284C7);
             dist.setPadding(0, dpToPx(2), 0, 0);
             content.addView(dist);
 
             card.addView(content);
-            card.setOnClickListener(v -> openNavigation(facility.getLatitude(), facility.getLongitude(), facility.getName()));
+            card.setOnClickListener(v -> {
+                selectedFacility = facility;
+                bindRoutingFacilities(root, lat, lng);
+            });
             container.addView(card);
         }
     }
 
-    private void updateBleViews(View root) {
-        TextView status = root.findViewById(R.id.ble_beacon_status);
-        TextView details = root.findViewById(R.id.ble_beacon_details);
-        MaterialButton btn = root.findViewById(R.id.btn_toggle_ble);
-
-        if (blePacket.isBroadcasting()) {
-            status.setText("● BLE RESCUE BEACON: BROADCASTING (ACTIVE)");
-            status.setTextColor(0xFF34D399);
-            btn.setText("Stop BLE Distress Beacon");
-        } else {
-            status.setText("○ BLE RESCUE BEACON: STANDBY (Ready)");
-            status.setTextColor(0xFF38BDF8);
-            btn.setText("Start BLE Distress Beacon Simulation");
+    private void updateSelectedDestinationBanner(View root) {
+        TextView destLabel = root.findViewById(R.id.selected_destination_label);
+        if (destLabel != null && selectedFacility != null) {
+            destLabel.setText("Selected Destination: " + selectedFacility.getName() + " (" + selectedFacility.getType() + ")");
         }
-
-        details.setText(String.format(Locale.ROOT,
-                "Service UUID: %s\nBeacon ID: %s | Hop Count: %d | RSSI: %d dBm | Packet Payload: %d bytes\nPayload JSON: %s",
-                BleRescuePacket.SCENAR_SERVICE_UUID,
-                blePacket.getBeaconId(),
-                blePacket.getMeshHop(),
-                blePacket.getRssi(),
-                blePacket.getPayloadByteSize(),
-                blePacket.getCompactPayload()));
     }
 
     private void setupActionListeners(View root) {
+        // Direct Status Controls (V3 Requirement: simulated review, dispatch, and closure controls)
+        root.findViewById(R.id.btn_status_dispatch).setOnClickListener(v -> updateIncidentStatus(root, IncidentStatus.DISPATCHED));
+        root.findViewById(R.id.btn_status_en_route).setOnClickListener(v -> updateIncidentStatus(root, IncidentStatus.EN_ROUTE));
+        root.findViewById(R.id.btn_status_on_scene).setOnClickListener(v -> updateIncidentStatus(root, IncidentStatus.ON_SCENE));
+        root.findViewById(R.id.btn_status_close).setOnClickListener(v -> updateIncidentStatus(root, IncidentStatus.RESOLVED));
+
         // Advance Status Button
         root.findViewById(R.id.btn_advance_status).setOnClickListener(v -> {
             activeIncident.advanceStatus();
@@ -412,47 +457,54 @@ public class ResponderFragment extends Fragment {
             }
         });
 
-        // Open Navigation Button
+        // Open External Directions to Incident Location (V4 Requirement)
         root.findViewById(R.id.btn_open_navigation).setOnClickListener(v -> {
             IncidentReport report = activeIncident.getReport();
-            double lat = report.getLatitude() != null ? report.getLatitude() : 37.77492;
-            double lng = report.getLongitude() != null ? report.getLongitude() : -122.41941;
-            String label = report.getLocationDescription() != null ? report.getLocationDescription() : "Emergency Scene";
-            openNavigation(lat, lng, label);
+            if (report.getLatitude() != null && report.getLongitude() != null) {
+                String label = report.getLocationDescription() != null ? report.getLocationDescription() : "Incident Scene";
+                openNavigation(report.getLatitude(), report.getLongitude(), label);
+            }
+        });
+
+        // Search Address in External Maps (Missing-Coordinate Fallback)
+        root.findViewById(R.id.btn_search_address_external).setOnClickListener(v -> {
+            String location = activeIncident.getReport().getLocationDescription();
+            if (!isBlank(location)) {
+                searchAddressExternal(location);
+            } else {
+                Toast.makeText(requireContext(), "No location text available to search.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Route to Selected Facility (V4 Requirement)
+        root.findViewById(R.id.btn_route_to_selected_facility).setOnClickListener(v -> {
+            if (selectedFacility != null) {
+                openNavigation(selectedFacility.getLatitude(), selectedFacility.getLongitude(), selectedFacility.getName());
+            } else {
+                Toast.makeText(requireContext(), "Select a facility from the list below.", Toast.LENGTH_SHORT).show();
+            }
         });
 
         // Copy Coordinates Button
         root.findViewById(R.id.btn_copy_coordinates).setOnClickListener(v -> {
             IncidentReport report = activeIncident.getReport();
-            double lat = report.getLatitude() != null ? report.getLatitude() : 37.77492;
-            double lng = report.getLongitude() != null ? report.getLongitude() : -122.41941;
-            copyToClipboard("Coordinates", String.format(Locale.ROOT, "%.5f, %.5f", lat, lng));
-            Toast.makeText(requireContext(), R.string.coordinates_copied, Toast.LENGTH_SHORT).show();
+            if (report.getLatitude() != null && report.getLongitude() != null) {
+                copyToClipboard("Coordinates", String.format(Locale.ROOT, "%.5f, %.5f", report.getLatitude(), report.getLongitude()));
+                Toast.makeText(requireContext(), R.string.coordinates_copied, Toast.LENGTH_SHORT).show();
+            }
         });
 
-        // Simulate Notification Broadcast Button
+        // Simulate Notification Broadcast Button (V3 Requirement)
         root.findViewById(R.id.btn_simulate_notification).setOnClickListener(v -> {
             TextView preview = root.findViewById(R.id.notification_preview_text);
             String message = preview.getText().toString();
 
             activeIncident.recordNotification("Emergency Contact (Jane Doe)", message);
-            activeIncident.recordNotification("Fire & Rescue Station 4 Dispatch", message);
-            activeIncident.recordNotification("County EMS Mutual Aid", message);
+            activeIncident.recordNotification("Mutual Aid Agency Dispatch", message);
 
             updateNotificationPreview(root);
             bindTimeline(root);
             Toast.makeText(requireContext(), R.string.simulated_notification_success, Toast.LENGTH_LONG).show();
-        });
-
-        // Toggle BLE Beacon Button
-        root.findViewById(R.id.btn_toggle_ble).setOnClickListener(v -> {
-            blePacket.setBroadcasting(!blePacket.isBroadcasting());
-            updateBleViews(root);
-            activeIncident.addTimeline(
-                    blePacket.isBroadcasting() ? "BLE Mesh Beacon Broadcast Started" : "BLE Mesh Beacon Stopped",
-                    "Simulated Bluetooth Low Energy offline rescue beacon toggled."
-            );
-            bindTimeline(root);
         });
 
         // Copy JSON Button
@@ -468,7 +520,6 @@ public class ResponderFragment extends Fragment {
             IncidentRepository.getInstance().setCurrentReport(sample);
             activeIncident = new ResponderIncident("INC-SAMPLE-CANONICAL", sample, "16:42");
             incidentList.add(0, activeIncident);
-            blePacket = BleRescuePacket.fromReport(activeIncident.getId(), activeIncident.getReport());
 
             setupQueueTabs(root);
             bindActiveIncident(root);
@@ -486,6 +537,14 @@ public class ResponderFragment extends Fragment {
         });
     }
 
+    private void updateIncidentStatus(View root, IncidentStatus status) {
+        activeIncident.setStatus(status);
+        setupQueueTabs(root);
+        updateStatusViews(root);
+        updateNotificationPreview(root);
+        Toast.makeText(requireContext(), "Status updated: " + status.getLabel(), Toast.LENGTH_SHORT).show();
+    }
+
     private void openNavigation(double lat, double lng, String label) {
         String uriStr = String.format(Locale.ROOT, "geo:%.5f,%.5f?q=%.5f,%.5f(%s)", lat, lng, lat, lng, Uri.encode(label));
         Intent mapIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(uriStr));
@@ -497,6 +556,21 @@ public class ResponderFragment extends Fragment {
                 startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(webUri)));
             } catch (Exception ex) {
                 Toast.makeText(requireContext(), "Navigation target: " + lat + ", " + lng, Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void searchAddressExternal(String query) {
+        String uriStr = "geo:0,0?q=" + Uri.encode(query);
+        Intent mapIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(uriStr));
+        try {
+            startActivity(mapIntent);
+        } catch (Exception e) {
+            String webUri = "https://www.google.com/maps/search/?api=1&query=" + Uri.encode(query);
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(webUri)));
+            } catch (Exception ex) {
+                Toast.makeText(requireContext(), "Location: " + query, Toast.LENGTH_SHORT).show();
             }
         }
     }
