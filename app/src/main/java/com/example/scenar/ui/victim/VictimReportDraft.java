@@ -37,23 +37,24 @@ final class VictimReportDraft {
             return reviewed;
         }
 
-        JSONObject toJson(String categoryLabel, String correctedSummary) throws JSONException {
+        JSONObject toJson(IncidentReport reviewed) throws JSONException {
             Coordinates point = input.coordinates();
-            Object coordinates = point == null ? JSONObject.NULL : new JSONObject()
-                    .put("latitude", point.latitude())
-                    .put("longitude", point.longitude())
-                    .put("accuracyMeters", point.accuracyMeters() == null
-                            ? JSONObject.NULL : point.accuracyMeters());
+            boolean originalCoordinates = point != null
+                    && Double.valueOf(point.latitude()).equals(reviewed.getLatitude())
+                    && Double.valueOf(point.longitude()).equals(reviewed.getLongitude());
+            Object coordinates = reviewed.getLatitude() == null ? JSONObject.NULL : new JSONObject()
+                    .put("latitude", reviewed.getLatitude())
+                    .put("longitude", reviewed.getLongitude())
+                    .put("accuracyMeters", originalCoordinates ? jsonValue(point.accuracyMeters()) : JSONObject.NULL);
             MedicalProfile profile = input.medicalProfile();
-            IncidentReport reviewed = toReviewedIncident(categoryLabel, correctedSummary);
             return new JSONObject()
                     .put("schemaVersion", 1)
                     .put("practiceMode", true)
                     .put("generatedAt", generatedAt.toString())
                     .put("category", input.category())
                     .put("description", input.description())
-                    .put("summary", correctedSummary)
-                    .put("location", new JSONObject().put("address", input.address())
+                    .put("summary", reviewed.getSummary())
+                    .put("location", new JSONObject().put("address", reviewed.getLocationDescription() == null ? "" : reviewed.getLocationDescription())
                             .put("coordinates", coordinates))
                     .put("medicalProfile", new JSONObject().put("allergies", profile.allergies())
                             .put("medications", profile.medications())

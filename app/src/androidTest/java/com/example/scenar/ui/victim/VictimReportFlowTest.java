@@ -102,6 +102,12 @@ public class VictimReportFlowTest {
             tap("Continue");
             tap("Generate practice report");
             visible("Review your report");
+            onView(withHint("Number of people, or blank"))
+                    .perform(scrollTo(), replaceText("1"), closeSoftKeyboard());
+            onView(withHint("One hazard per line"))
+                    .perform(scrollTo(), replaceText("Blocked exit"), closeSoftKeyboard());
+            onView(withHint("One condition per line"))
+                    .perform(scrollTo(), replaceText(""), closeSoftKeyboard());
 
             tap("Save report as PDF");
             intended(hasAction(Intent.ACTION_CREATE_DOCUMENT));
@@ -112,12 +118,12 @@ public class VictimReportFlowTest {
             visible("Responder incident view");
             var report = IncidentRepository.getInstance().getCurrentReport();
             assertNotNull(report);
-            assertEquals(Integer.valueOf(2), report.getPeopleAffected());
-            assertTrue(report.getCriticalConditions().contains("One person may be unresponsive"));
-            assertTrue(report.getHazards().contains("Smoke reported nearby"));
+            assertEquals(Integer.valueOf(1), report.getPeopleAffected());
+            assertTrue(report.getCriticalConditions().isEmpty());
+            assertEquals(java.util.Collections.singletonList("Blocked exit"), report.getHazards());
             assertTrue(report.getMissingInformation().contains("Confirm the exact location"));
             assertTrue(report.getUncertainties().contains("Number of affected people requires confirmation"));
-            onView(withText("Smoke reported nearby")).perform(scrollTo());
+            onView(withText("Blocked exit")).perform(scrollTo());
         } finally {
             IncidentRepository.getInstance().clear();
         }

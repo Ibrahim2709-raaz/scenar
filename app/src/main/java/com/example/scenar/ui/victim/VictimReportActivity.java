@@ -49,6 +49,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
@@ -91,13 +92,13 @@ public final class VictimReportActivity extends Activity {
         }
     }
 
-    private record Export(ExportFormat format, VictimReportDraft.Report report, String categoryLabel, String summary,
+    private record Export(ExportFormat format, VictimReportDraft.Report report, IncidentReport reviewed,
                           List<ReportPdf.Field> fields) {
         void writeTo(OutputStream output) throws IOException, JSONException {
             if (format == ExportFormat.PDF) {
-                ReportPdf.write(output, report.generatedAt(), summary, fields);
+                ReportPdf.write(output, report.generatedAt(), reviewed.getSummary(), fields);
             } else {
-                String json = report.toJson(categoryLabel, summary).toString(2) + "\n";
+                String json = report.toJson(reviewed).toString(2) + "\n";
                 output.write(json.getBytes(StandardCharsets.UTF_8));
             }
         }
@@ -111,7 +112,7 @@ public final class VictimReportActivity extends Activity {
         String allergies = "";
         String medications = "";
         String conditions = "";
-        String summary = "";
+        IncidentReview review;
         String voiceNotice = "";
         String locationNotice = "";
         String generationNotice = "";
@@ -129,7 +130,8 @@ public final class VictimReportActivity extends Activity {
     private CancellationSignal locationRequest;
     private LinearLayout content;
     private EditText descriptionField;
-    private EditText summaryField;
+    private final EnumMap<IncidentReview.Field, EditText> reviewFields =
+            new EnumMap<>(IncidentReview.Field.class);
     private Spinner categoryField;
     private TextView voiceStatus;
     private TextView locationStatus;
@@ -309,18 +311,21 @@ public final class VictimReportActivity extends Activity {
         step("Step 3 of 3  ·  Check the draft for accuracy");
         LinearLayout facts = card(Color.WHITE);
         heading(facts, "Reported details");
-        add(facts, text("The demo may include simulated AI details. Review them before continuing.",
+        add(facts, text("Check and correct any simulated AI details before continuing. Clear a field if the information is unknown.",
                 14, MUTED, false), 8);
-        for (ReportPdf.Field field : reportFields()) {
-            fact(facts, field.label(), field.displayValue());
+        fact(facts, "Original description", draft.report.input().description());
+        reviewFields.clear();
+        for (IncidentReview.Field detail : IncidentReview.Field.values()) {
+            String value = draft.review.get(detail);
+            EditText editor = field(facts, detail.label, value, detail.hint, detail.lines,
+                    Math.max(SUMMARY_LIMIT, value.length()), updated -> {
+                        draft.review.set(detail, updated);
+                        if (draft.export == null && draft.pendingExport == null) showExportStatus("");
+                    });
+            reviewFields.put(detail, editor);
         }
         add(content, facts, 14);
 
-        summaryField = field(content, "Report summary (editable)", draft.summary, "", 4,
-                SUMMARY_LIMIT, value -> {
-                    draft.summary = value;
-                    if (draft.export == null && draft.pendingExport == null) showExportStatus("");
-                });
         add(content, text("Save a copy or open the responder demo on this device. The app does not dispatch help.",
                 14, MUTED, false), 12);
         pdfButton = primary("Save report as PDF", () -> exportReport(ExportFormat.PDF));
@@ -336,17 +341,10 @@ public final class VictimReportActivity extends Activity {
         add(content, secondary("Clear report and start over", this::confirmClear), 8);
     }
 
-    private List<ReportPdf.Field> reportFields() {
+    private List<ReportPdf.Field> reportFields(IncidentReport reviewed) {
         VictimReportDraft.Input input = draft.report.input();
-        VictimReportDraft.MedicalProfile medical = input.medicalProfile();
-        IncidentReport reviewed = draft.report.toReviewedIncident(CATEGORY_LABELS[draft.category], draft.summary);
-        String coordinates = "";
-        if (input.coordinates() != null) {
-            coordinates = format(input.coordinates());
-        } else if (reviewed.getLatitude() != null && reviewed.getLongitude() != null) {
-            coordinates = format(new VictimReportDraft.Coordinates(
-                    reviewed.getLatitude(), reviewed.getLongitude(), null));
-        }
+        String coordinates = reviewed.getLatitude() == null ? ""
+                : String.format(Locale.ROOT, "%.5f, %.5f", reviewed.getLatitude(), reviewed.getLongitude());
         return Arrays.asList(
                 new ReportPdf.Field("Incident type", valueOrEmpty(reviewed.getIncidentType())),
                 new ReportPdf.Field("Original description", input.description()),
@@ -355,9 +353,6 @@ public final class VictimReportActivity extends Activity {
                 new ReportPdf.Field("Hazards", String.join("\n", reviewed.getHazards())),
                 new ReportPdf.Field("Address or landmark", valueOrEmpty(reviewed.getLocationDescription())),
                 new ReportPdf.Field("Coordinates", coordinates),
-                new ReportPdf.Field("Allergies", medical.allergies()),
-                new ReportPdf.Field("Medications", medical.medications()),
-                new ReportPdf.Field("Medical conditions or access needs", medical.conditions()),
                 new ReportPdf.Field("Medical flags", String.join("\n", reviewed.getMedicalFlags())),
                 new ReportPdf.Field("Missing information", String.join("\n", reviewed.getMissingInformation())),
                 new ReportPdf.Field("Uncertainties", String.join("\n", reviewed.getUncertainties())));
@@ -369,10 +364,9 @@ public final class VictimReportActivity extends Activity {
 
     private void openResponderDemo() {
         if (draft.pendingExport != null || draft.export != null) return;
-        String summary = validatedSummary();
-        if (summary == null) return;
-        IncidentRepository.getInstance().setCurrentReport(
-                draft.report.toReviewedIncident(CATEGORY_LABELS[draft.category], summary));
+        IncidentReport reviewed = validatedReport();
+        if (reviewed == null) return;
+        IncidentRepository.getInstance().setCurrentReport(reviewed);
         setResult(RESULT_OK);
         finish();
     }
@@ -511,7 +505,7 @@ public final class VictimReportActivity extends Activity {
             locationMessage("Location request stopped. Only captured coordinates are included.");
         }
         VictimReportDraft.Input input = input();
-        if (draft.report != null && draft.report.input().equals(input) && !draft.summary.trim().isEmpty()) {
+        if (draft.report != null && draft.report.input().equals(input)) {
             go(Screen.REVIEW);
             return;
         }
@@ -543,27 +537,28 @@ public final class VictimReportActivity extends Activity {
             draft.generationNotice = "";
             draft.exportNotice = "";
             draft.report = report;
-            draft.summary = report.summary();
+            draft.review = new IncidentReview(
+                    report.toReviewedIncident(CATEGORY_LABELS[draft.category], report.summary()));
             go(Screen.REVIEW);
         }));
     }
 
-    private String validatedSummary() {
-        String summary = draft.summary.trim();
-        if (summary.isEmpty()) {
-            summaryField.setError("Enter a summary before continuing.");
-            summaryField.requestFocus();
+    private IncidentReport validatedReport() {
+        try {
+            return draft.review.toReport();
+        } catch (IncidentReview.InvalidField invalid) {
+            EditText editor = reviewFields.get(invalid.field);
+            editor.requestFocus();
+            editor.setError(invalid.getMessage());
             return null;
         }
-        return summary;
     }
 
     private void exportReport(ExportFormat format) {
-        String summary = validatedSummary();
-        if (summary == null) return;
+        IncidentReport reviewed = validatedReport();
+        if (reviewed == null) return;
         try {
-            draft.pendingExport = new Export(format, draft.report, CATEGORY_LABELS[draft.category],
-                    summary, reportFields());
+            draft.pendingExport = new Export(format, draft.report, reviewed, reportFields(reviewed));
             showExportStatus("");
             startActivityForResult(new Intent(Intent.ACTION_CREATE_DOCUMENT)
                     .addCategory(Intent.CATEGORY_OPENABLE).setType(format.mimeType)

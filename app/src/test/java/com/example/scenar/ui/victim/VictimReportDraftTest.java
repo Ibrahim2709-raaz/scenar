@@ -3,6 +3,7 @@ package com.example.scenar.ui.victim;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertThrows;
 
 import com.example.scenar.ai.FakeIncidentAiService;
 import com.example.scenar.model.IncidentReport;
@@ -14,6 +15,74 @@ import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 public class VictimReportDraftTest {
+    @Test
+    public void reviewReplacesStructuredValuesAndCanClearAiGuesses() {
+        IncidentReport ai = new IncidentReport();
+        ai.setSummary("AI summary");
+        ai.setIncidentType("Fire");
+        ai.setPeopleAffected(2);
+        ai.setCriticalConditions(Collections.singletonList("Possible injuries"));
+        ai.setHazards(Collections.singletonList("Smoke"));
+        ai.setLocationDescription("Incorrect location");
+        ai.setLatitude(25.0);
+        ai.setLongitude(55.0);
+        ai.setMedicalFlags(Collections.singletonList("Incorrect flag"));
+        ai.setMissingInformation(Collections.singletonList("Exact location"));
+        ai.setUncertainties(Collections.singletonList("People count"));
+        IncidentReview review = new IncidentReview(ai);
+        review.set(IncidentReview.Field.SUMMARY, " Corrected summary ");
+        review.set(IncidentReview.Field.TYPE, "Other");
+        review.set(IncidentReview.Field.PEOPLE, "0");
+        review.set(IncidentReview.Field.CONDITIONS, "");
+        review.set(IncidentReview.Field.HAZARDS, " Wet floor\n\nBlocked exit ");
+        review.set(IncidentReview.Field.LOCATION, "Practice Hall");
+        review.set(IncidentReview.Field.LATITUDE, "");
+        review.set(IncidentReview.Field.LONGITUDE, "");
+        review.set(IncidentReview.Field.MEDICAL, "");
+        review.set(IncidentReview.Field.MISSING, "Time of incident");
+        review.set(IncidentReview.Field.UNCERTAINTIES, "Cause unknown");
+
+        IncidentReport corrected = review.toReport();
+        assertEquals("Corrected summary", corrected.getSummary());
+        assertEquals("Other", corrected.getIncidentType());
+        assertEquals(Integer.valueOf(0), corrected.getPeopleAffected());
+        assertTrue(corrected.getCriticalConditions().isEmpty());
+        assertEquals(Arrays.asList("Wet floor", "Blocked exit"), corrected.getHazards());
+        assertEquals("Practice Hall", corrected.getLocationDescription());
+        assertNull(corrected.getLatitude());
+        assertNull(corrected.getLongitude());
+        assertTrue(corrected.getMedicalFlags().isEmpty());
+        assertEquals(Collections.singletonList("Time of incident"), corrected.getMissingInformation());
+        assertEquals(Collections.singletonList("Cause unknown"), corrected.getUncertainties());
+        assertEquals(Integer.valueOf(2), ai.getPeopleAffected());
+        assertEquals(Collections.singletonList("Smoke"), ai.getHazards());
+
+        review.set(IncidentReview.Field.PEOPLE, "");
+        assertNull(review.toReport().getPeopleAffected());
+        assertEquals(Integer.valueOf(0), corrected.getPeopleAffected());
+    }
+
+    @Test
+    public void reviewRejectsInvalidNumbersBeforeExportOrHandoff() {
+        IncidentReport ai = new IncidentReport();
+        ai.setSummary("Practice report");
+        IncidentReview review = new IncidentReview(ai);
+        for (String invalidCount : Arrays.asList("-1", "1.5", "2147483648")) {
+            review.set(IncidentReview.Field.PEOPLE, invalidCount);
+            assertEquals(IncidentReview.Field.PEOPLE,
+                    assertThrows(IncidentReview.InvalidField.class, review::toReport).field);
+        }
+        review.set(IncidentReview.Field.PEOPLE, "1");
+        review.set(IncidentReview.Field.LATITUDE, "25.5");
+        assertEquals(IncidentReview.Field.LONGITUDE,
+                assertThrows(IncidentReview.InvalidField.class, review::toReport).field);
+        review.set(IncidentReview.Field.LONGITUDE, "181");
+        assertEquals(IncidentReview.Field.LONGITUDE,
+                assertThrows(IncidentReview.InvalidField.class, review::toReport).field);
+        review.set(IncidentReview.Field.LONGITUDE, "-120.5");
+        assertEquals(Double.valueOf(-120.5), review.toReport().getLongitude());
+    }
+
     @Test
     public void handoffPreservesStructuredSimulationAndUserCorrections() throws Exception {
         VictimReportDraft.Input input = new VictimReportDraft.Input(
