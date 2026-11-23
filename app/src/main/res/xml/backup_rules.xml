@@ -1,13 +1,13 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample backup rules file; uncomment and customize as necessary.
-   See https://developer.android.com/guide/topics/data/autobackup
-   for details.
-   Note: This file is ignored for devices older than API 31
-   See https://developer.android.com/about/versions/12/backup-restore
--->
+<?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
+
     <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+        The profile is encrypted with a device-bound Android Keystore
+        key. Do not back up ciphertext that cannot be decrypted on a
+        different device.
+    -->
+    <exclude
+        domain="sharedpref"
+        path="scenar_secure_profile.xml" />
+
 </full-backup-content>

@@ -138,4 +138,41 @@
     <string name="step_structure">AI structures</string>
     <string name="step_verify">Verify</string>
 
+    <!-- Emergency profile -->
+    <string name="emergency_profile_title">Emergency profile</string>
+    <string name="profile_description">Stored securely on this device. You choose what is shared with each incident.</string>
+    <string name="profile_completion_format">Profile %1$d%% complete</string>
+    <string name="personal_details_title">Personal details</string>
+    <string name="preferred_name_label">Preferred name</string>
+    <string name="date_of_birth_label">Date of birth</string>
+    <string name="date_format_hint">YYYY-MM-DD</string>
+    <string name="blood_type_label">Blood type</string>
+    <string name="medical_information_title">Medical information</string>
+    <string name="allergies_label">Allergies</string>
+    <string name="medications_label">Medications</string>
+    <string name="medical_conditions_label">Medical conditions</string>
+    <string name="none_known_hint">Enter “None known” when applicable</string>
+    <string name="accessibility_title">Accessibility and communication</string>
+    <string name="accessibility_needs_label">Needs or preferences</string>
+    <string name="accessibility_hint">Mobility, hearing, vision, communication or other needs</string>
+    <string name="emergency_contact_title">Emergency contact</string>
+    <string name="emergency_contact_description">This contact is never notified without your permission.</string>
+    <string name="contact_name_label">Contact name</string>
+    <string name="contact_relationship_label">Relationship</string>
+    <string name="contact_phone_label">Phone number</string>
+    <string name="save_profile">Save profile</string>
+    <string name="profile_saved">Emergency profile saved securely.</string>
+    <string name="profile_cleared">Emergency profile cleared.</string>
+    <string name="profile_load_failed">The saved profile could not be opened. You can clear it and create a new one.</string>
+    <string name="profile_save_failed">The profile could not be saved securely. Try again.</string>
+    <string name="profile_clear_failed">The profile could not be completely cleared.</string>
+    <string name="clear_profile_title">Clear emergency profile?</string>
+    <string name="clear_profile_message">This permanently removes the medical and emergency-contact information stored on this device.</string>
+    <string name="clear_profile_action">Clear profile</string>
+    <string name="future_date_error">Date of birth cannot be in the future.</string>
+    <string name="invalid_date_error">Choose a valid date of birth.</string>
+    <string name="contact_phone_required">Enter a phone number for this contact.</string>
+    <string name="contact_name_required">Enter the contact’s name.</string>
+    <string name="invalid_phone_error">Enter a valid phone number.</string>
+
 </resources>
