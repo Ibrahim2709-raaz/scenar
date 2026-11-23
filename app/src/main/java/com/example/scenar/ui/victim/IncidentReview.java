@@ -7,6 +7,8 @@ import java.util.EnumMap;
 import java.util.List;
 
 final class IncidentReview {
+    record Location(String address, Double latitude, Double longitude) {}
+
     enum Field {
         SUMMARY("Report summary", "Enter a summary", 4),
         TYPE("Incident type", "Leave blank if unknown", 1),
@@ -77,19 +79,24 @@ final class IncidentReview {
         result.setPeopleAffected(peopleAffected());
         result.setCriticalConditions(lines(Field.CONDITIONS));
         result.setHazards(lines(Field.HAZARDS));
-        result.setLocationDescription(value(Field.LOCATION));
+        Location location = location();
+        result.setLocationDescription(location.address());
+        result.setLatitude(location.latitude());
+        result.setLongitude(location.longitude());
+        result.setMedicalFlags(lines(Field.MEDICAL));
+        result.setMissingInformation(lines(Field.MISSING));
+        result.setUncertainties(lines(Field.UNCERTAINTIES));
+        return result;
+    }
+
+    Location location() {
         Double latitude = coordinate(Field.LATITUDE, 90);
         Double longitude = coordinate(Field.LONGITUDE, 180);
         if ((latitude == null) != (longitude == null)) {
             throw new InvalidField(latitude == null ? Field.LATITUDE : Field.LONGITUDE,
                     "Enter both coordinates or clear both.");
         }
-        result.setLatitude(latitude);
-        result.setLongitude(longitude);
-        result.setMedicalFlags(lines(Field.MEDICAL));
-        result.setMissingInformation(lines(Field.MISSING));
-        result.setUncertainties(lines(Field.UNCERTAINTIES));
-        return result;
+        return new Location(value(Field.LOCATION), latitude, longitude);
     }
 
     private Integer peopleAffected() {

@@ -88,16 +88,6 @@ public class MedicalConsentTest {
     }
 
     @Test
-    public void victimHandoffWithholdsMedicalFlags() {
-        assertFalse(ResponderQueue.VICTIM_HANDOFF_CONSENT.shareMedicalFlags());
-
-        ResponderIncident incident = queue.ingestVictimHandoff(reportWithMedicalFlags(), repository);
-
-        assertTrue(incident.getMedicalFlagsToShow().isEmpty());
-        assertEquals(ResponderCopy.MEDICAL_NOT_SHARED, incident.getMedicalEmptyMessage());
-    }
-
-    @Test
     public void demoIncidentWithWithheldMedicalConsentShowsNoFlags() {
         queue.ensureDemoIncidents(repository);
 

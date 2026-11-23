@@ -24,7 +24,9 @@ public class MainActivity extends AppCompatActivity {
                     new ActivityResultContracts.StartActivityForResult(),
                     result -> {
                         if (result.getResultCode() == RESULT_OK) {
-                            showResponderDashboard();
+                            Intent data = result.getData();
+                            showResponderDashboard(data == null ? null
+                                    : data.getStringExtra(VictimReportActivity.EXTRA_DISPATCH_ID));
                         }
                     }
             );
@@ -73,7 +75,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void showResponderDashboard() {
-        navigateTo(new ResponderFragment(), true);
+        showResponderDashboard(null);
+    }
+
+    public void showResponderDashboard(String incidentId) {
+        navigateTo(ResponderFragment.forIncident(incidentId), true);
     }
 
     public void showBeaconDemo() {

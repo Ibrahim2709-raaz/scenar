@@ -26,6 +26,7 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -39,8 +40,11 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.scenar.ai.IncidentAiService;
 import com.example.scenar.ai.IncidentAiServiceFactory;
+import com.example.scenar.model.DispatchRecord;
 import com.example.scenar.model.IncidentReport;
+import com.example.scenar.model.SharingConsent;
 import com.example.scenar.repository.IncidentRepository;
+import com.example.scenar.repository.SimulatedDispatchRepository;
 
 import org.json.JSONException;
 
@@ -57,6 +61,7 @@ import java.util.concurrent.CompletionException;
 import java.util.function.Consumer;
 
 public final class VictimReportActivity extends Activity {
+    public static final String EXTRA_DISPATCH_ID = "com.example.scenar.extra.DISPATCH_ID";
     private static final int INK = 0xff18251f;
     private static final int GREEN = 0xff19533c;
     private static final int MUTED = 0xff4e5d54;
@@ -78,7 +83,7 @@ public final class VictimReportActivity extends Activity {
             "Fire or smoke", "Personal safety", "Other"
     };
 
-    private enum Screen { HOME, DETAILS, CONTEXT, REVIEW }
+    private enum Screen { HOME, DETAILS, CONTEXT, REVIEW, DISPATCH }
 
     private enum ExportFormat {
         PDF("application/pdf", "pdf"), JSON("application/json", "json");
@@ -113,6 +118,10 @@ public final class VictimReportActivity extends Activity {
         String medications = "";
         String conditions = "";
         IncidentReview review;
+        boolean shareLocation;
+        boolean shareMedicalFlags;
+        boolean simulateContactNotification;
+        PracticeDispatch practiceDispatch;
         String voiceNotice = "";
         String locationNotice = "";
         String generationNotice = "";
@@ -187,6 +196,7 @@ public final class VictimReportActivity extends Activity {
     @Override
     public void onBackPressed() {
         switch (draft.screen) {
+            case DISPATCH -> go(Screen.REVIEW);
             case REVIEW -> {
                 if (draft.export == null && draft.pendingExport == null) go(Screen.CONTEXT);
             }
@@ -219,6 +229,7 @@ public final class VictimReportActivity extends Activity {
             case DETAILS -> showDetails();
             case CONTEXT -> showContext();
             case REVIEW -> showReview();
+            case DISPATCH -> showDispatchStatus();
         }
     }
 
@@ -326,6 +337,7 @@ public final class VictimReportActivity extends Activity {
             reviewFields.put(detail, editor);
         }
         add(content, facts, 14);
+        add(content, secondary("Maps and nearby hospitals", this::openRouting), 12);
 
         add(content, text("Save a copy or open the responder demo on this device. The app does not dispatch help.",
                 14, MUTED, false), 12);
@@ -335,11 +347,38 @@ public final class VictimReportActivity extends Activity {
         add(content, jsonButton, 8);
         updateExportButtons();
         exportStatus = status(content, draft.export != null ? "Saving report…" : draft.exportNotice);
-        add(content, secondary("Open responder demo", this::openResponderDemo), 8);
+        addDispatchOptions();
         add(content, secondary("Edit incident details", () -> {
             if (draft.pendingExport == null && draft.export == null) go(Screen.CONTEXT);
         }), 8);
         add(content, secondary("Clear report and start over", this::confirmClear), 8);
+    }
+
+    private void addDispatchOptions() {
+        LinearLayout options = card(Color.WHITE);
+        heading(options, "Practice handoff");
+        add(options, text("The local responder demo receives your reviewed incident. These choices "
+                + "control the separate location and medical fields. Check the other fields for "
+                + "private details before sharing.",
+                14, MUTED, false), 8);
+        add(options, checkBox("Include reviewed location", draft.shareLocation,
+                checked -> draft.shareLocation = checked), 8);
+        add(options, checkBox("Include reviewed medical flags", draft.shareMedicalFlags,
+                checked -> draft.shareMedicalFlags = checked), 8);
+        add(options, checkBox("Allow simulated trusted-contact notifications", draft.simulateContactNotification,
+                checked -> draft.simulateContactNotification = checked), 4);
+        add(options, primary("Prepare practice handoff", this::preparePracticeHandoff), 8);
+        add(content, options, 12);
+    }
+
+    private CheckBox checkBox(String label, boolean checked, Consumer<Boolean> update) {
+        CheckBox box = new CheckBox(this);
+        box.setText(label);
+        box.setTextColor(INK);
+        box.setMinHeight(dp(48));
+        box.setChecked(checked);
+        box.setOnCheckedChangeListener((button, selected) -> update.accept(selected));
+        return box;
     }
 
     private List<ReportPdf.Field> reportFields(IncidentReport reviewed) {
@@ -363,12 +402,36 @@ public final class VictimReportActivity extends Activity {
         return value == null ? "" : value.toString();
     }
 
-    private void openResponderDemo() {
+    private void preparePracticeHandoff() {
         if (draft.pendingExport != null || draft.export != null) return;
         IncidentReport reviewed = validatedReport();
         if (reviewed == null) return;
-        IncidentRepository.getInstance().setCurrentReport(reviewed);
-        setResult(RESULT_OK);
+        draft.practiceDispatch = new PracticeDispatch(reviewed, new SharingConsent(
+                draft.shareLocation, draft.shareMedicalFlags, draft.simulateContactNotification));
+        go(Screen.DISPATCH);
+    }
+
+    private void showDispatchStatus() {
+        title("Practice handoff status");
+        LinearLayout status = card(Color.WHITE);
+        heading(status, "Report ready for local responder demo");
+        fact(status, "Dispatch", "Simulated only. No emergency services contacted.");
+        fact(status, "Location", draft.practiceDispatch.includesLocation()
+                ? "Included with consent." : "None included in the handoff.");
+        fact(status, "Medical flags", draft.practiceDispatch.includesMedicalFlags()
+                ? "Included with consent." : "None included in the handoff.");
+        fact(status, "Trusted contact", draft.practiceDispatch.allowsContactNotification()
+                ? "Responder can simulate a notification." : "Notification permission withheld.");
+        add(content, status, 14);
+        add(content, primary("Open responder demo", this::openResponderDemo), 12);
+        add(content, secondary("Back to review", () -> go(Screen.REVIEW)), 8);
+    }
+
+    private void openResponderDemo() {
+        if (isFinishing()) return;
+        DispatchRecord record = draft.practiceDispatch.submit(SimulatedDispatchRepository.getInstance());
+        IncidentRepository.getInstance().setCurrentReport(record.getReport());
+        setResult(RESULT_OK, new Intent().putExtra(EXTRA_DISPATCH_ID, record.getIncidentId()));
         finish();
     }
 
@@ -468,6 +531,75 @@ public final class VictimReportActivity extends Activity {
         locationStatus.setText(message.trim());
     }
 
+    private void openRouting() {
+        if (draft.pendingExport != null || draft.export != null) return;
+        try {
+            showRouting(draft.review.location());
+        } catch (IncidentReview.InvalidField invalid) {
+            showReviewError(invalid);
+        }
+    }
+
+    private void showRouting(IncidentReview.Location location) {
+        ScrollView scroll = new ScrollView(this);
+        LinearLayout routing = column();
+        routing.setPadding(dp(12), 0, dp(12), dp(12));
+        scroll.addView(routing);
+        VictimMapSearch incident = VictimMapSearch.forIncident(location);
+        VictimMapSearch hospitals = VictimMapSearch.forHospitals(location);
+        LinearLayout routes = card(Color.WHITE);
+        heading(routes, "Open in a map app");
+        add(routes, text(incident == null
+                ? "No incident location is set. Your map app may use its own location settings."
+                : "Check your reviewed location before passing it to a map app.",
+                14, MUTED, false), 8);
+        if (incident != null) {
+            fact(routes, "Reviewed location", incident.query());
+        }
+        TextView routingStatus = status(routes, "");
+        if (incident != null) {
+            add(routes, secondary("View incident location", () -> openMap(incident, routingStatus)), 8);
+        }
+        add(routes, primary("Search hospitals in Maps", () -> openMap(hospitals, routingStatus)), 8);
+        add(routing, routes, 0);
+
+        LinearLayout guidance = card(Color.WHITE);
+        heading(guidance, "Before travelling");
+        add(guidance, text("Map results may vary. Verify the facility’s address and services with the facility. "
+                + "In a real emergency, contact your local emergency services.", 14, INK, false), 8);
+        add(guidance, secondary("Source: Google Maps Help", () -> openExternal(
+                Uri.parse("https://support.google.com/maps/answer/4610185"), routingStatus,
+                "No app is available to open the help page.")), 8);
+        add(routing, guidance, 12);
+        new AlertDialog.Builder(this).setTitle("Maps and nearby hospitals")
+                .setView(scroll).setNegativeButton("Back to review", null).show();
+    }
+
+    private void openMap(VictimMapSearch search, TextView routingStatus) {
+        Uri uri = Uri.parse("geo:" + search.center() + "?q=" + Uri.encode(search.query()));
+        Runnable open = () -> openExternal(uri, routingStatus,
+                "No compatible map app is available. Search for a hospital in your preferred map service.");
+        if (search.usesIncidentLocation()) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Share location with Maps?")
+                    .setMessage("The map app will receive the reviewed address or coordinates.")
+                    .setNegativeButton("Cancel", null)
+                    .setPositiveButton("Open Maps", (dialog, which) -> open.run())
+                    .show();
+        } else {
+            open.run();
+        }
+    }
+
+    private void openExternal(Uri uri, TextView routingStatus, String unavailableMessage) {
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, uri));
+            routingStatus.setText("");
+        } catch (ActivityNotFoundException | SecurityException error) {
+            routingStatus.setText(unavailableMessage);
+        }
+    }
+
     private String format(VictimReportDraft.Coordinates point) {
         String position = String.format(Locale.ROOT, "%.5f, %.5f",
                 point.latitude(), point.longitude());
@@ -540,6 +672,9 @@ public final class VictimReportActivity extends Activity {
             draft.report = report;
             draft.review = new IncidentReview(
                     report.toReviewedIncident(CATEGORY_LABELS[draft.category], report.summary()));
+            draft.shareLocation = false;
+            draft.shareMedicalFlags = false;
+            draft.simulateContactNotification = false;
             go(Screen.REVIEW);
         }));
     }
@@ -548,11 +683,15 @@ public final class VictimReportActivity extends Activity {
         try {
             return draft.review.toReport();
         } catch (IncidentReview.InvalidField invalid) {
-            EditText editor = reviewFields.get(invalid.field);
-            editor.requestFocus();
-            editor.setError(invalid.getMessage());
+            showReviewError(invalid);
             return null;
         }
+    }
+
+    private void showReviewError(IncidentReview.InvalidField invalid) {
+        EditText editor = reviewFields.get(invalid.field);
+        editor.requestFocus();
+        editor.setError(invalid.getMessage());
     }
 
     private void exportReport(ExportFormat format) {
