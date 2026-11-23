@@ -175,4 +175,30 @@
     <string name="contact_name_required">Enter the contact’s name.</string>
     <string name="invalid_phone_error">Enter a valid phone number.</string>
 
+    <!-- Product home -->
+    <string name="good_morning">Good morning</string>
+    <string name="good_afternoon">Good afternoon</string>
+    <string name="good_evening">Good evening</string>
+    <string name="named_greeting_format">%1$s, %2$s</string>
+    <string name="home_safety_question">Are you safe right now?</string>
+    <string name="emergency_help_title">Get emergency help</string>
+    <string name="emergency_help_description">Describe what happened and SCENAR will organize the critical details for you to verify.</string>
+    <string name="report_emergency_now">Report an emergency</string>
+    <string name="device_readiness_title">DEVICE READINESS</string>
+    <string name="network_label">Internet connection</string>
+    <string name="network_ready">Connected and ready</string>
+    <string name="network_offline">Offline — beacon mode remains available</string>
+    <string name="location_label">Device location</string>
+    <string name="location_ready">Available for incident reports</string>
+    <string name="location_disabled">Location services are turned off</string>
+    <string name="location_permission_later">Permission requested only when needed</string>
+    <string name="profile_readiness_title">EMERGENCY READINESS</string>
+    <string name="home_profile_completion_format">%1$d%% profile completion</string>
+    <string name="complete_profile">Complete profile</string>
+    <string name="review_profile">Review profile</string>
+    <string name="open_profile">Open profile</string>
+    <string name="profile_unavailable">Profile currently unavailable</string>
+    <string name="home_profile_error">The encrypted profile could not be loaded.</string>
+    <string name="home_privacy_note">Your saved medical profile remains on this device until you explicitly choose to share it.</string>
+
 </resources>
