@@ -325,6 +325,7 @@ public final class VictimReportActivity extends Activity {
             reviewFields.put(detail, editor);
         }
         add(content, facts, 14);
+        add(content, secondary("Maps and nearby hospitals", this::openRouting), 12);
 
         add(content, text("Save a copy or open the responder demo on this device. The app does not dispatch help.",
                 14, MUTED, false), 12);
@@ -467,6 +468,75 @@ public final class VictimReportActivity extends Activity {
         locationStatus.setText(message.trim());
     }
 
+    private void openRouting() {
+        if (draft.pendingExport != null || draft.export != null) return;
+        try {
+            showRouting(draft.review.location());
+        } catch (IncidentReview.InvalidField invalid) {
+            showReviewError(invalid);
+        }
+    }
+
+    private void showRouting(IncidentReview.Location location) {
+        ScrollView scroll = new ScrollView(this);
+        LinearLayout routing = column();
+        routing.setPadding(dp(12), 0, dp(12), dp(12));
+        scroll.addView(routing);
+        VictimMapSearch incident = VictimMapSearch.forIncident(location);
+        VictimMapSearch hospitals = VictimMapSearch.forHospitals(location);
+        LinearLayout routes = card(Color.WHITE);
+        heading(routes, "Open in a map app");
+        add(routes, text(incident == null
+                ? "No incident location is set. Your map app may use its own location settings."
+                : "Check your reviewed location before passing it to a map app.",
+                14, MUTED, false), 8);
+        if (incident != null) {
+            fact(routes, "Reviewed location", incident.query());
+        }
+        TextView routingStatus = status(routes, "");
+        if (incident != null) {
+            add(routes, secondary("View incident location", () -> openMap(incident, routingStatus)), 8);
+        }
+        add(routes, primary("Search hospitals in Maps", () -> openMap(hospitals, routingStatus)), 8);
+        add(routing, routes, 0);
+
+        LinearLayout guidance = card(Color.WHITE);
+        heading(guidance, "Before travelling");
+        add(guidance, text("Map results may vary. Verify the facility’s address and services with the facility. "
+                + "In a real emergency, contact your local emergency services.", 14, INK, false), 8);
+        add(guidance, secondary("Source: Google Maps Help", () -> openExternal(
+                Uri.parse("https://support.google.com/maps/answer/4610185"), routingStatus,
+                "No app is available to open the help page.")), 8);
+        add(routing, guidance, 12);
+        new AlertDialog.Builder(this).setTitle("Maps and nearby hospitals")
+                .setView(scroll).setNegativeButton("Back to review", null).show();
+    }
+
+    private void openMap(VictimMapSearch search, TextView routingStatus) {
+        Uri uri = Uri.parse("geo:" + search.center() + "?q=" + Uri.encode(search.query()));
+        Runnable open = () -> openExternal(uri, routingStatus,
+                "No compatible map app is available. Search for a hospital in your preferred map service.");
+        if (search.usesIncidentLocation()) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Share location with Maps?")
+                    .setMessage("The map app will receive the reviewed address or coordinates.")
+                    .setNegativeButton("Cancel", null)
+                    .setPositiveButton("Open Maps", (dialog, which) -> open.run())
+                    .show();
+        } else {
+            open.run();
+        }
+    }
+
+    private void openExternal(Uri uri, TextView routingStatus, String unavailableMessage) {
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, uri));
+            routingStatus.setText("");
+        } catch (ActivityNotFoundException | SecurityException error) {
+            routingStatus.setText(unavailableMessage);
+        }
+    }
+
     private String format(VictimReportDraft.Coordinates point) {
         String position = String.format(Locale.ROOT, "%.5f, %.5f",
                 point.latitude(), point.longitude());
@@ -547,11 +617,15 @@ public final class VictimReportActivity extends Activity {
         try {
             return draft.review.toReport();
         } catch (IncidentReview.InvalidField invalid) {
-            EditText editor = reviewFields.get(invalid.field);
-            editor.requestFocus();
-            editor.setError(invalid.getMessage());
+            showReviewError(invalid);
             return null;
         }
+    }
+
+    private void showReviewError(IncidentReview.InvalidField invalid) {
+        EditText editor = reviewFields.get(invalid.field);
+        editor.requestFocus();
+        editor.setError(invalid.getMessage());
     }
 
     private void exportReport(ExportFormat format) {
