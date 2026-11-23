@@ -3,53 +3,105 @@ package com.example.scenar.ui.responder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import com.example.scenar.model.DispatchStatus;
+import com.example.scenar.model.EmergencyFacility;
 import com.example.scenar.model.IncidentReport;
+import com.example.scenar.model.SharingConsent;
+import com.example.scenar.repository.SimulatedDispatchRepository;
 
 import org.json.JSONException;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
+import java.util.List;
+
 public class ResponderUnitTest {
+    private final SimulatedDispatchRepository repository = SimulatedDispatchRepository.getInstance();
+    private ResponderQueue queue;
 
-    @Test
-    public void testIncidentStatusProgression() {
-        IncidentStatus status = IncidentStatus.RECEIVED;
-        status = status.next();
-        assertEquals(IncidentStatus.DISPATCHED, status);
+    @Before
+    public void setUp() {
+        repository.clear();
+        queue = new ResponderQueue();
+    }
 
-        status = status.next();
-        assertEquals(IncidentStatus.EN_ROUTE, status);
-
-        status = status.next();
-        assertEquals(IncidentStatus.ON_SCENE, status);
-
-        status = status.next();
-        assertEquals(IncidentStatus.RESOLVED, status);
-
-        // Terminal state remains resolved
-        status = status.next();
-        assertEquals(IncidentStatus.RESOLVED, status);
+    @After
+    public void tearDown() {
+        repository.clear();
     }
 
     @Test
-    public void testDirectStatusUpdates() {
-        IncidentReport report = SampleIncidentProvider.getCanonicalSampleReport();
-        ResponderIncident incident = new ResponderIncident("INC-TEST-002", report, "12:00");
+    public void advanceFollowsSharedDispatchStatusOrder() {
+        assertEquals(DispatchStatus.REVIEWING, DispatchStatusStyle.next(DispatchStatus.SUBMITTED));
+        assertEquals(DispatchStatus.DISPATCHED_SIMULATION, DispatchStatusStyle.next(DispatchStatus.REVIEWING));
+        assertEquals(DispatchStatus.CLOSED, DispatchStatusStyle.next(DispatchStatus.DISPATCHED_SIMULATION));
+        assertEquals(null, DispatchStatusStyle.next(DispatchStatus.CLOSED));
 
-        incident.setStatus(IncidentStatus.EN_ROUTE);
-        assertEquals(IncidentStatus.EN_ROUTE, incident.getStatus());
-
-        incident.setStatus(IncidentStatus.ON_SCENE);
-        assertEquals(IncidentStatus.ON_SCENE, incident.getStatus());
-
-        incident.setStatus(IncidentStatus.RESOLVED);
-        assertEquals(IncidentStatus.RESOLVED, incident.getStatus());
+        for (DispatchStatus status : DispatchStatus.values()) {
+            DispatchStatus next = DispatchStatusStyle.next(status);
+            if (next != null) assertTrue(status + " -> " + next, status.canTransitionTo(next));
+        }
     }
 
     @Test
-    public void testPriorityCalculation() {
+    public void statusChangesGoThroughSharedRepository() {
+        ResponderIncident incident = queue.submit(
+                SampleIncidentProvider.getCanonicalSampleReport(),
+                SharingConsent.shareReportDetails(), repository);
+        assertEquals(DispatchStatus.SUBMITTED, incident.getStatus());
+
+        assertTrue(queue.updateStatus(repository, incident, DispatchStatus.REVIEWING));
+        assertEquals(DispatchStatus.REVIEWING, incident.getStatus());
+        assertEquals(DispatchStatus.REVIEWING, repository.getIncidents().get(0).getStatus());
+
+        // Not allowed by DispatchStatus: REVIEWING cannot go back to SUBMITTED.
+        assertFalse(queue.updateStatus(repository, incident, DispatchStatus.SUBMITTED));
+        assertEquals(DispatchStatus.REVIEWING, incident.getStatus());
+
+        assertTrue(queue.updateStatus(repository, incident, DispatchStatus.DISPATCHED_SIMULATION));
+        assertTrue(queue.updateStatus(repository, incident, DispatchStatus.CLOSED));
+        assertFalse(queue.updateStatus(repository, incident, DispatchStatus.REVIEWING));
+    }
+
+    @Test
+    public void syncReturnsTrackedIncidentsNewestFirst() {
+        ResponderIncident first = queue.submit(new IncidentReport(), SharingConsent.shareNothing(), repository);
+        ResponderIncident second = queue.submit(new IncidentReport(), SharingConsent.shareNothing(), repository);
+
+        List<ResponderIncident> synced = queue.sync(repository);
+        assertEquals(2, synced.size());
+        assertSame(second, synced.get(0));
+        assertSame(first, synced.get(1));
+    }
+
+    @Test
+    public void victimHandoffIsSubmittedOnlyOnce() {
+        IncidentReport report = new IncidentReport();
+        report.setSummary("Test handoff");
+
+        assertNotNull(queue.ingestVictimHandoff(report, repository));
+        assertEquals(null, queue.ingestVictimHandoff(report, repository));
+        assertEquals(1, repository.getIncidents().size());
+    }
+
+    @Test
+    public void demoIncidentsAreSeededOnceAndMarkedAsDemo() {
+        queue.ensureDemoIncidents(repository);
+        int seeded = repository.getIncidents().size();
+        queue.ensureDemoIncidents(repository);
+
+        assertEquals(seeded, repository.getIncidents().size());
+        for (ResponderIncident incident : queue.sync(repository)) {
+            assertTrue(incident.isDemo());
+        }
+    }
+
+    @Test
+    public void priorityCalculation() {
         IncidentReport report = new IncidentReport();
         report.getCriticalConditions().add("Unresponsive victim");
         assertEquals(PriorityLevel.CRITICAL, PriorityLevel.calculate(report));
@@ -64,22 +116,36 @@ public class ResponderUnitTest {
     }
 
     @Test
-    public void testSafeEmptyAndUnknownInformationStates() {
-        // Test handling of completely empty report
-        IncidentReport emptyReport = new IncidentReport();
-        ResponderIncident incident = new ResponderIncident("INC-EMPTY", emptyReport, "00:00");
+    public void notesAreAddedToTheLocalTimeline() {
+        ResponderIncident incident = queue.submit(new IncidentReport(),
+                SharingConsent.shareNothing(), repository);
+        int before = incident.getTimeline().size();
 
-        assertNotNull(incident);
-        assertNull(incident.getReport().getLatitude());
-        assertNull(incident.getReport().getLongitude());
-        assertTrue(incident.getReport().getCriticalConditions().isEmpty());
-        assertTrue(incident.getReport().getHazards().isEmpty());
-        assertTrue(incident.getReport().getMedicalFlags().isEmpty());
-        assertEquals(PriorityLevel.MEDIUM, incident.getPriority());
+        incident.addNote("Perimeter set up.");
+        incident.addNote("   ");
+
+        assertEquals(1, incident.getResponderNotes().size());
+        assertEquals(before + 1, incident.getTimeline().size());
     }
 
     @Test
-    public void testCanonicalSampleJsonParsing() throws JSONException {
+    public void facilityDistanceUsesSharedEmergencyFacility() {
+        IncidentReport report = new IncidentReport();
+        report.setLatitude(37.77492);
+        report.setLongitude(-122.41941);
+        IncidentLocation location = IncidentLocation.of(report);
+
+        List<EmergencyFacility> nearby = DemoFacilities.repository()
+                .findNearby(location.getLatitude(), location.getLongitude(), 3);
+        assertEquals(3, nearby.size());
+        Double km = location.distanceKmTo(nearby.get(0));
+        assertNotNull(km);
+        assertTrue("Nearest demo facility should be within 2 km", km > 0 && km < 2.0);
+        assertTrue(location.facilityDistanceText(nearby.get(0)).contains("km"));
+    }
+
+    @Test
+    public void canonicalSampleJsonParsing() throws JSONException {
         IncidentReport report = SampleIncidentProvider.fromJson(SampleIncidentProvider.SAMPLE_REPORT_JSON);
 
         assertNotNull(report);
@@ -96,10 +162,9 @@ public class ResponderUnitTest {
     }
 
     @Test
-    public void testJsonRoundTrip() throws JSONException {
+    public void jsonRoundTrip() throws JSONException {
         IncidentReport original = SampleIncidentProvider.getCanonicalSampleReport();
-        String json = SampleIncidentProvider.toJson(original);
-        IncidentReport parsed = SampleIncidentProvider.fromJson(json);
+        IncidentReport parsed = SampleIncidentProvider.fromJson(SampleIncidentProvider.toJson(original));
 
         assertEquals(original.getIncidentType(), parsed.getIncidentType());
         assertEquals(original.getSummary(), parsed.getSummary());
@@ -108,44 +173,5 @@ public class ResponderUnitTest {
         assertEquals(original.getCriticalConditions().size(), parsed.getCriticalConditions().size());
         assertEquals(original.getHazards().size(), parsed.getHazards().size());
         assertEquals(original.getMedicalFlags().size(), parsed.getMedicalFlags().size());
-    }
-
-    @Test
-    public void testResponderIncidentLifecycleAndTimeline() {
-        IncidentReport report = SampleIncidentProvider.getCanonicalSampleReport();
-        ResponderIncident incident = new ResponderIncident("INC-TEST-001", report, "12:00");
-
-        assertEquals(IncidentStatus.RECEIVED, incident.getStatus());
-        assertEquals(PriorityLevel.CRITICAL, incident.getPriority());
-        assertEquals(1, incident.getTimeline().size());
-
-        // Advance status
-        incident.advanceStatus();
-        assertEquals(IncidentStatus.DISPATCHED, incident.getStatus());
-        assertEquals(2, incident.getTimeline().size());
-
-        // Add note
-        incident.addNote("Medic 4 arrived on perimeter.");
-        assertEquals(1, incident.getResponderNotes().size());
-        assertEquals(3, incident.getTimeline().size());
-
-        // Record notification
-        assertFalse(incident.isContactNotificationSent());
-        incident.recordNotification("Jane Doe", "Alert dispatched.");
-        assertTrue(incident.isContactNotificationSent());
-        assertEquals(1, incident.getNotificationLog().size());
-        assertEquals(4, incident.getTimeline().size());
-    }
-
-    @Test
-    public void testNearbyFacilityHaversineDistanceAndEta() {
-        NearbyFacility facility = new NearbyFacility(
-                "Trauma Center", "Hospital", 37.78120, -122.41150, "555-0100", "123 Main"
-        );
-        double distKm = facility.distanceKm(37.77492, -122.41941);
-        assertTrue("Distance should be approximately 0.5 - 2.0 km", distKm > 0.5 && distKm < 2.0);
-
-        int eta = facility.etaMinutes(37.77492, -122.41941);
-        assertTrue("ETA should be between 1 and 15 mins", eta >= 1 && eta <= 15);
     }
 }

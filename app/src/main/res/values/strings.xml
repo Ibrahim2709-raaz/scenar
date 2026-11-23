@@ -27,31 +27,44 @@
 
     <!-- Responder Dashboard & Delivery Extensions -->
     <string name="open_responder_dashboard">Open Responder Dashboard</string>
-    <string name="responder_console_title">SCENAR Dispatcher Console</string>
-    <string name="responder_subtitle">First Responder Incident Management &amp; Dispatch</string>
+    <string name="responder_console_title">SCENAR responder console (demo)</string>
+    <string name="responder_subtitle">Demo responder console. Every action here is simulated.</string>
     <string name="active_incident_label">Active Incident</string>
-    <string name="incident_queue_title">Active Incident Feed</string>
-    <string name="advance_status">Advance Status</string>
+    <string name="incident_queue_title">Simulated incident queue</string>
+    <string name="advance_status">Next simulated status</string>
     <string name="status_timeline_label">Dispatch Timeline &amp; Audit Log</string>
     <string name="add_note">Add Field Note</string>
     <string name="note_hint">Enter responder on-scene note...</string>
-    <string name="open_navigation">Open External Directions (Incident Location)</string>
+    <string name="open_navigation">Open reported location in maps</string>
     <string name="copy_coordinates">Copy Coordinates</string>
     <string name="coordinates_copied">Coordinates copied to clipboard</string>
-    <string name="contact_notification_title">Simulated Contact Notification (V3)</string>
-    <string name="contact_notification_desc">Simulated emergency alert log dispatched to ICE emergency contacts upon status change. (Internal simulation only — no real SMS or cellular transmission occurs).</string>
-    <string name="simulate_notification_button">Simulate Alert Broadcast</string>
-    <string name="simulated_notification_success">Alert broadcast simulated! 3 recipients notified in simulation log.</string>
+    <string name="contact_notification_title">Simulated contact notification</string>
+    <string name="contact_notification_desc">Shows what a message to emergency contacts could say. Nothing is delivered: no SMS, call or message leaves this device.</string>
+    <string name="simulate_notification_button">Add to simulation log</string>
     <string name="load_sample_json">Load Sample JSON</string>
-    <string name="json_view_title">Interoperability JSON Contract</string>
+    <string name="json_view_title">Shared report JSON (filtered by consent)</string>
     <string name="copy_json">Copy JSON</string>
     <string name="json_copied">JSON copied to clipboard</string>
 
     <!-- V3 & V4 Strict Boundary Extensions -->
     <string name="simulated_dispatch_banner">SIMULATED DISPATCH ONLY — NO REAL EMERGENCY SERVICES CONTACTED</string>
-    <string name="facility_routing_title">Emergency Facility Routing (V4)</string>
-    <string name="facility_disclaimer">Curated facility reference only. Does not claim live bed, ambulance, or treatment availability.</string>
-    <string name="open_facility_directions">Open External Directions to Selected Facility</string>
-    <string name="missing_coordinates_warning">Coordinates Unavailable: Exact GPS coordinates were not transmitted. Location is provided as text only.</string>
-    <string name="search_address_external">Search Address in External Maps</string>
+    <string name="facility_routing_title">Nearby facilities (demo data)</string>
+    <string name="facility_disclaimer">Fictional demo facilities. No information about beds, ambulances or treatment availability.</string>
+    <string name="open_facility_directions">Open selected facility in maps</string>
+
+    <!-- Responder simulation labels -->
+    <string name="responder_demo_unit">Demo unit (simulated)</string>
+    <string name="dispatch_controls_title">Simulated dispatch controls</string>
+    <string name="status_submitted_placeholder">SUBMITTED (SIMULATION)</string>
+    <string name="status_action_review">Review</string>
+    <string name="status_action_dispatch">Dispatch (sim)</string>
+    <string name="status_action_close">Close</string>
+    <string name="map_title">Incident location (schematic demo map)</string>
+    <string name="location_unavailable">Location unavailable</string>
+    <string name="location_unavailable_detail">No GPS location in this report. Navigation, coordinate copying, facility distances and location in the BLE preview are turned off.</string>
+    <string name="no_facility_selected">No facility selected.</string>
+    <string name="select_facility_hint">Tap a facility to select it:</string>
+    <string name="demo_recipients">Demo recipients (fictional): Demo Contact A (555-0199) and a demo mutual aid desk</string>
+    <string name="ble_preview_title">BLE payload preview (simulation only)</string>
+    <string name="ble_preview_note">Preview only. Bluetooth is not used and nothing is transmitted.</string>
 </resources>

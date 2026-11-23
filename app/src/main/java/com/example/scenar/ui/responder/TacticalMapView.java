@@ -24,10 +24,10 @@ public class TacticalMapView extends View {
     private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint poiPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
-    private double incidentLat = 37.77492;
-    private double incidentLng = -122.41941;
-    private String incidentLabel = "Incident Site";
-    private double distanceKm = 1.4;
+    // No default position: until setLocation() receives real coordinates, nothing is drawn.
+    private Double incidentLat;
+    private Double incidentLng;
+    private String incidentLabel = "Incident";
 
     public TacticalMapView(Context context) {
         super(context);
@@ -79,12 +79,14 @@ public class TacticalMapView extends View {
     public void setLocation(double lat, double lng, String label) {
         this.incidentLat = lat;
         this.incidentLng = lng;
-        this.incidentLabel = label != null ? label : "Incident Site";
+        this.incidentLabel = label != null ? label : "Incident";
         invalidate();
     }
 
-    public void setDistanceKm(double km) {
-        this.distanceKm = km;
+    /** Removes the location; the view then draws only the "Location unavailable" notice. */
+    public void clearLocation() {
+        this.incidentLat = null;
+        this.incidentLng = null;
         invalidate();
     }
 
@@ -113,6 +115,14 @@ public class TacticalMapView extends View {
         }
         for (int y = 0; y < h; y += step) {
             canvas.drawLine(0, y, w, y, gridPaint);
+        }
+
+        if (incidentLat == null || incidentLng == null) {
+            textPaint.setTextSize(26f);
+            textPaint.setColor(0xFFFBBF24);
+            canvas.drawText(ResponderCopy.LOCATION_UNAVAILABLE.toUpperCase(Locale.ROOT),
+                    24f, h * 0.5f, textPaint);
+            return;
         }
 
         // Center crosshair / range rings
@@ -150,23 +160,23 @@ public class TacticalMapView extends View {
         canvas.drawText("INCIDENT: " + incidentLabel, incX + 16f, incY - 12f, textPaint);
 
         textPaint.setColor(0xFF38BDF8);
-        canvas.drawText("UNIT 12 (RESPONDER)", unitX + 16f, unitY + 10f, textPaint);
+        canvas.drawText("DEMO UNIT (SIMULATED)", unitX + 16f, unitY + 10f, textPaint);
 
         textPaint.setColor(0xFF10B981);
-        canvas.drawText("ER / TRAUMA CENTER", hospX - 100f, hospY + 32f, textPaint);
+        canvas.drawText("DEMO FACILITY", hospX - 100f, hospY + 32f, textPaint);
 
         // Tactical HUD telemetry bar at bottom
         textPaint.setTextSize(22f);
         textPaint.setColor(0xFF94A3B8);
         String telemetry = String.format(Locale.ROOT,
-                "GPS: %.4f, %.4f | DISTANCE: %.1f KM | ETA: ~%d MIN",
-                incidentLat, incidentLng, distanceKm, Math.max(1, (int) Math.round(distanceKm * 2.5)));
+                "REPORTED GPS: %.4f, %.4f | POSITIONS NOT TO SCALE",
+                incidentLat, incidentLng);
         canvas.drawText(telemetry, 24f, h - 20f, textPaint);
 
         // Compass / Mode badge in top left
         textPaint.setTextSize(20f);
         textPaint.setColor(0xFF38BDF8);
-        canvas.drawText("TACTICAL RADAR VIEW — LIVE GPS LOCK", 24f, 36f, textPaint);
+        canvas.drawText("SCHEMATIC DEMO MAP — SIMULATED, NOT REAL-TIME", 24f, 36f, textPaint);
     }
 
     private void drawHospitalCross(Canvas canvas, float cx, float cy) {

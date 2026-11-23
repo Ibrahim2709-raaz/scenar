@@ -1,155 +1,110 @@
 # SCENAR — Test-Case Verification Checklist
 **Owner:** Teammate 2 (Responder Side and Product Delivery)  
-**Target Milestone:** V0 — V5 (Weekend MVP & Release Gates)  
-**Verification Command:** `.\gradlew.bat testDebugUnitTest assembleDebug`
+**Verification commands:** `.\gradlew.bat testDebugUnitTest` then `.\gradlew.bat assembleDebug`
+
+Everything on the responder dashboard is a simulation. No message, call, SMS, Bluetooth signal or dispatch leaves the device.
 
 ---
 
-## 1. Automated Unit Tests
+## 1. Automated Unit Tests (responder)
 
-| ID | Test Suite | Test Case | Expected Result | Status |
-|---|---|---|---|---|
-| UT-01 | `ResponderUnitTest` | `testIncidentStatusProgression` | Status cycles linearly `RECEIVED` → `DISPATCHED` → `EN_ROUTE` → `ON_SCENE` → `RESOLVED` and halts at `RESOLVED` | PASS |
-| UT-02 | `ResponderUnitTest` | `testPriorityCalculation` | Critical conditions trigger `CRITICAL PRIORITY`; hazards (fire/smoke) trigger `HIGH PRIORITY` | PASS |
-| UT-03 | `ResponderUnitTest` | `testCanonicalSampleJsonParsing` | Ingests canonical sample JSON without loss; verifies all 11 model fields | PASS |
-| UT-04 | `ResponderUnitTest` | `testJsonRoundTrip` | Serialized report matches parsed report identically | PASS |
-| UT-05 | `ResponderUnitTest` | `testResponderIncidentLifecycleAndTimeline` | Status changes, field notes, and notifications generate chronological audit events | PASS |
-| UT-06 | `ResponderUnitTest` | `testNearbyFacilityHaversineDistanceAndEta` | Calculates spherical distance within ±0.05 km and realistic urban travel ETA | PASS |
-| UT-07 | `ResponderUnitTest` | `testBleRescuePacket` | Generates compact JSON beacon payload under 128 bytes with service UUID | PASS |
-| UT-08 | `FakeIncidentAiServiceTest` | Deterministic AI output | Fake AI returns stable sample report for victim reporting flow | PASS |
-| UT-09 | `VictimReportDraftTest` | Review screen edits | User corrections override AI output; unknown fields are preserved | PASS |
+Fill in the Status column after running the Gradle commands above.
 
----
-
-## 2. Interactive Responder Console & Dashboard (Manual / UI Verification)
-
-### TC-01: Direct Responder Dashboard Access
-- [ ] Launch application on emulator / device.
-- [ ] Verify "Open Responder Dashboard" button is prominent on Home screen.
-- [ ] Tap "Open Responder Dashboard".
-- [ ] Confirm `ResponderFragment` loads immediately without crash or lag.
-
-### TC-02: Incident Queue & Triage Feed
-- [ ] Verify horizontal queue shows active incidents:
-  - `INC-2026-LIVE` (if submitted from victim flow)
-  - `INC-2026-8842` (Structural Emergency — Building B)
-  - `INC-2026-8839` (Chemical Hazard — Chemistry Hall)
-  - `INC-2026-8825` (Medical Trauma — Campus Quad)
-- [ ] Tap each incident card and verify active incident switches smoothly.
-- [ ] Verify priority badges render in high-contrast color codes:
-  - `CRITICAL PRIORITY`: Red (`#DC2626`)
-  - `HIGH PRIORITY`: Amber (`#EA580C`)
-  - `MEDIUM PRIORITY`: Orange (`#E65100`)
-
-### TC-03: Incident Structured Details
-- [ ] Confirm incident type, executive summary, people affected count, and time elapsed are displayed.
-- [ ] Verify **Critical Conditions** card displays bulleted items with alert icon (e.g., "One person is unresponsive").
-- [ ] Verify **Scene Hazards** card displays warnings (e.g., "Smoke in hallway", "Falling debris").
-- [ ] Verify **Consented Medical Flags** card explicitly displays patient consent badge (e.g., "Consented: Penicillin allergy").
-- [ ] Verify **Missing Information** displays unverified items (e.g., "Confirm floor accessibility").
-- [ ] Verify **AI Uncertainties** displays caution banner for first responders.
-
-### TC-04: Status Progression Lifecycle
-- [ ] Tap "Advance Status" button.
-- [ ] Verify status advances from `DISPATCHED` → `EN ROUTE`.
-- [ ] Verify status pill color updates (`#6A1B9A` Purple).
-- [ ] Verify Stepper Bar highlights current stage.
-- [ ] Verify Dispatch Timeline appends a timestamped audit log:
-  `"[HH:mm:ss] Status Updated: En Route — Incident status transitioned to En Route"`
-- [ ] Tap "Advance Status" again to verify `ON SCENE` and `RESOLVED` states.
-
-### TC-05: Responder Field Notes
-- [ ] Enter text in "Enter responder on-scene note...":
-  `"Perimeter secured. Hallway smoke clearing. Secondary medic requested."`
-- [ ] Tap "Add Field Note".
-- [ ] Verify input clears and note appears at the top of the Dispatch Timeline.
-- [ ] Verify empty or whitespace notes are rejected gracefully.
+| ID | Test class | What it checks | Status |
+|---|---|---|---|
+| UT-01 | `ResponderUnitTest` | Advance button follows the shared `DispatchStatus` order; invalid transitions are refused; changes go through `SimulatedDispatchRepository` | |
+| UT-02 | `ResponderUnitTest` | Victim handoff is submitted once; demo incidents are seeded once and marked as demo | |
+| UT-03 | `ResponderUnitTest` | Priority calculation; notes; facility distance uses the shared `EmergencyFacility` | |
+| UT-04 | `ResponderUnitTest` | Sample JSON parsing and round trip | |
+| UT-05 | `MissingCoordinatesTest` | No GPS shows "Location unavailable"; navigation, coordinate copying, facility distances and BLE location are all off; no coordinates are substituted | |
+| UT-06 | `MedicalConsentTest` | Withheld medical consent keeps medical flags out of the dashboard and BLE preview; only the filtered dispatch record is used | |
+| UT-07 | `ResponderSimulationLabelsTest` | Status labels, timeline, notification log, facilities and BLE preview are marked as simulated or fictional; responder text never claims anything was sent, verified, broadcasting or live | |
+| UT-08 | `BlePayloadPreviewTest` | BLE preview JSON is built with Gson: quotes, newlines and backslashes are escaped; size is measured in UTF-8; unknown values are left out | |
 
 ---
 
-## 3. Map & Tactical Location Display
+## 2. Responder Dashboard (manual)
 
-### TC-06: Tactical Map Radar View
-- [ ] Verify `TacticalMapView` canvas renders dark navy grid (`#0F172A`) with coordinate lines.
-- [ ] Verify pulsing red beacon marker indicates Incident Target.
-- [ ] Verify cyan marker indicates Unit 12 (Responder).
-- [ ] Verify green cross indicates nearest Emergency Facility / Hospital.
-- [ ] Verify bottom HUD telemetry displays live GPS coordinates, distance (km), and transit ETA.
+### TC-01: Open the dashboard
+- [ ] On Home, tap "Open Responder Dashboard".
+- [ ] The simulation banner is visible at the top.
+- [ ] The queue shows four demo incidents, each marked "(demo)".
 
-### TC-07: Navigation & Coordinate Actions
-- [ ] Tap "Navigate in Google Maps".
-- [ ] Verify standard Android `geo:` intent or browser Google Maps launches with exact scene coordinates and location pin.
-- [ ] Tap "Copy Coordinates".
-- [ ] Verify Toast confirms: `"Coordinates copied to clipboard"`.
-- [ ] Paste into another app/browser to verify exact format: `37.77492, -122.41941`.
+### TC-02: Incident details
+- [ ] Incident type, summary, people affected ("Unknown" when not given) and received time are shown.
+- [ ] Critical conditions and hazards show "None reported." when empty.
+- [ ] The "Sharing consent (simulation)" card lists what the reporter shared.
 
----
+### TC-03: Medical consent
+- [ ] Open the demo "Structural emergency": medical details are shown.
+- [ ] Open the demo "Medical incident": "Medical details not shared: the reporter did not consent." No medical flags appear anywhere, including the JSON and BLE preview.
 
-## 4. Automated Contact-Notification Simulation (V3 Milestone)
+### TC-04: Simulated status changes
+- [ ] Status steps are: Submitted, Under review, Dispatched (simulation only), Closed, each labelled as simulation.
+- [ ] Only allowed changes are enabled (for example, Review is disabled once dispatched).
+- [ ] Each change adds "Simulated status change: …" with "No responders were contacted." to the timeline.
+- [ ] After Closed, the advance button is disabled.
 
-### TC-08: Notification Preview & Recipients
-- [ ] Inspect recipient group:
-  - Designated Emergency Contact (Jane Doe — Next of Kin: +1 555-0199)
-  - Fire Station 4 Dispatch
-  - County EMS Mutual Aid
-- [ ] Verify preview text dynamically incorporates current incident location and status:
-  `"[SCENAR AUTO-ALERT] Emergency status updated to EN ROUTE for Building B, Room 204..."`
-
-### TC-09: Simulation Broadcast Execution
-- [ ] Tap "Simulate Alert Broadcast".
-- [ ] Verify green status badge appears:
-  `"✓ Automated Alerts Dispatched & Verified via Gateway"`
-- [ ] Verify 3 timestamped transmission logs appear under notification log container:
-  `"[HH:mm:ss] Sent to Emergency Contact (Jane Doe): ..."`
-- [ ] Verify timeline appends: `"Automated Alert Dispatched"`.
+### TC-05: Notes
+- [ ] Add a note; it appears at the top of the timeline. Blank notes are ignored.
 
 ---
 
-## 5. Frontier Experiments (V4 Routing & V5 Bluetooth Rescue Mode)
+## 3. Location and Map
 
-### TC-10: V4 Emergency Facility Routing
-- [ ] Verify 3 verified emergency facilities are listed:
-  1. Metropolitan Trauma Center & ER (Level 1 Trauma)
-  2. Station 4 Fire & Rescue (Heavy Rescue & HazMat)
-  3. St. Jude Urgent Care
-- [ ] Verify dynamic distance (km) and estimated transit time (mins) are calculated via Haversine formula.
-- [ ] Tap on "Metropolitan Trauma Center & ER" card.
-- [ ] Verify map navigation intent launches with hospital coordinates.
+### TC-06: Incident with GPS
+- [ ] The schematic map shows "SCHEMATIC DEMO MAP — SIMULATED, NOT REAL-TIME" and the reported coordinates.
+- [ ] "Open reported location in maps" opens a maps app (or the browser) at those coordinates.
+- [ ] "Copy Coordinates" copies the same coordinates.
 
-### TC-11: V5 Offline BLE Rescue Beacon
-- [ ] Verify standby HUD displays:
-  - `Service UUID: 0000FEAA-0000-1000-8000-00805F9B34FB`
-  - Beacon ID, Hop Count (1), RSSI (-68 dBm), Payload size.
-- [ ] Tap "Start BLE Distress Beacon Simulation".
-- [ ] Verify status updates to active green:
-  `"● BLE RESCUE BEACON: BROADCASTING (ACTIVE)"`
-- [ ] Verify timeline records BLE Beacon Broadcast Started event.
-- [ ] Tap button again to verify clean toggle back to Standby.
+### TC-07: Incident without GPS
+- [ ] Open the demo "Fire or smoke" (no GPS).
+- [ ] "Location unavailable" is shown; the map is hidden.
+- [ ] Navigation and copy buttons are disabled.
+- [ ] Facilities show "Distance unavailable (no GPS location)" and the directions button is disabled.
+- [ ] The BLE preview has no `lat`/`lon` and says location was left out.
 
 ---
 
-## 6. End-to-End Interoperability & Data Contract
+## 4. Simulated Contact Notification
 
-### TC-12: End-to-End Victim Flow to Responder Console
-- [ ] From Home screen, tap "Report emergency".
-- [ ] Speak or type incident:
-  `"Ceiling collapsed in Building B, room 204. Smoke in the hallway, two people injured."`
-- [ ] Proceed through review screen and tap "Confirm and preview dispatch".
-- [ ] Verify app transitions automatically into `ResponderFragment`.
-- [ ] Verify `INC-2026-LIVE` appears in the incident queue with the exact victim report details.
+### TC-08: With consent
+- [ ] Open the demo "Structural emergency" and tap "Add to simulation log".
+- [ ] Two log entries appear, each "Simulated only, not delivered", for the fictional recipients.
 
-### TC-13: Canonical Sample Report Reload
-- [ ] Tap "Load Sample JSON" in responder header.
-- [ ] Verify canonical sample report loads immediately (`INC-SAMPLE-CANONICAL`).
-- [ ] Inspect "Interoperability JSON Contract" section at the bottom.
-- [ ] Tap "Copy JSON" and verify Toast `"JSON copied to clipboard"`.
+### TC-09: Without consent
+- [ ] Open the demo "Chemical hazard": the button is disabled and the screen says the reporter did not consent to contacting emergency contacts.
+
+---
+
+## 5. Facilities and BLE Preview
+
+### TC-10: Demo facilities
+- [ ] Three fictional facilities are listed with "Source: Fictional demo data, not a real facility".
+- [ ] With GPS, each shows a straight-line distance estimate; tapping one selects it.
+
+### TC-11: BLE payload preview
+- [ ] The card says "Preview only. Bluetooth is not used and nothing is transmitted."
+- [ ] The size is shown in bytes (UTF-8).
+
+---
+
+## 6. End to End
+
+### TC-12: Victim report to responder
+- [ ] On Home, tap "Report emergency", describe an incident, review and submit.
+- [ ] The dashboard opens with the new incident selected (not marked "(demo)").
+- [ ] Medical details from the victim screen are not shown (the victim screen does not collect medical consent yet).
+
+### TC-13: Sample JSON
+- [ ] Tap "Load Sample JSON": a new incident appears in the queue.
+- [ ] "Copy JSON" copies the filtered report.
 
 ---
 
 ## 7. Build and Stability Gates
 
-- [ ] Project compiles with zero warnings or errors:
-  `.\gradlew.bat testDebugUnitTest assembleDebug`
-- [ ] APK installs on emulator (Android 8.0 / API 26 through Android 15 / API 35).
-- [ ] No ANR (Application Not Responding) or memory leaks during navigation.
-- [ ] Offline operation: Works completely in airplane mode with no internet connection.
+- [ ] `.\gradlew.bat testDebugUnitTest` passes.
+- [ ] `.\gradlew.bat assembleDebug` succeeds.
+- [ ] The APK installs and runs on an API 26+ emulator.
+- [ ] The responder dashboard works in airplane mode.

@@ -58,7 +58,7 @@
                     android:id="@+id/responder_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/responder_console_title"
+                    android:text="@string/responder_title"
                     android:textColor="@color/white"
                     android:textSize="20sp"
                     android:textStyle="bold" />
@@ -83,7 +83,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Unit 12 (Medic &amp; Engine 4)"
+                        android:text="@string/responder_demo_unit"
                         android:textColor="#38BDF8"
                         android:textSize="12sp"
                         android:textStyle="bold" />
@@ -308,7 +308,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Simulated Dispatch Controls"
+                        android:text="@string/dispatch_controls_title"
                         android:textColor="@color/responder_text_primary"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -319,7 +319,7 @@
                         android:layout_height="wrap_content"
                         android:paddingHorizontal="12dp"
                         android:paddingVertical="4dp"
-                        android:text="DISPATCHED"
+                        android:text="@string/status_submitted_placeholder"
                         android:textSize="12sp"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -340,42 +340,32 @@
                     android:orientation="horizontal">
 
                     <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_status_review"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_marginEnd="4dp"
+                        android:layout_weight="1"
+                        android:text="@string/status_action_review"
+                        android:textSize="12sp" />
+
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_status_dispatch"
                         style="@style/Widget.Material3.Button.TonalButton"
                         android:layout_width="0dp"
-                        android:layout_height="44dp"
+                        android:layout_height="48dp"
                         android:layout_marginEnd="4dp"
                         android:layout_weight="1"
-                        android:text="Dispatch"
-                        android:textSize="12sp" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_status_en_route"
-                        style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_width="0dp"
-                        android:layout_height="44dp"
-                        android:layout_marginEnd="4dp"
-                        android:layout_weight="1"
-                        android:text="En Route"
-                        android:textSize="12sp" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_status_on_scene"
-                        style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_width="0dp"
-                        android:layout_height="44dp"
-                        android:layout_marginEnd="4dp"
-                        android:layout_weight="1"
-                        android:text="On Scene"
+                        android:text="@string/status_action_dispatch"
                         android:textSize="12sp" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_status_close"
                         style="@style/Widget.Material3.Button.OutlinedButton"
                         android:layout_width="0dp"
-                        android:layout_height="44dp"
+                        android:layout_height="48dp"
                         android:layout_weight="1"
-                        android:text="Close"
+                        android:text="@string/status_action_close"
                         android:textSize="12sp" />
                 </LinearLayout>
 
@@ -458,7 +448,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Incident Location &amp; Map (V4)"
+                    android:text="@string/map_title"
                     android:textColor="@color/responder_text_primary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
@@ -468,7 +458,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Coordinates: 37.77492, -122.41941"
+                    android:text="@string/location_unavailable"
                     android:textColor="@color/responder_text_secondary"
                     android:textSize="12sp" />
 
@@ -493,7 +483,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="⚠️ Coordinates Unavailable"
+                            android:text="@string/location_unavailable"
                             android:textColor="#B45309"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -503,18 +493,9 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="@string/missing_coordinates_warning"
+                            android:text="@string/location_unavailable_detail"
                             android:textColor="#78350F"
                             android:textSize="12sp" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btn_search_address_external"
-                            style="@style/Widget.Material3.Button.TonalButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="44dp"
-                            android:layout_marginTop="10dp"
-                            android:text="@string/search_address_external"
-                            android:textSize="13sp" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -606,7 +587,7 @@
                             android:id="@+id/selected_destination_label"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Selected Destination: Metropolitan Trauma Center &amp; ER"
+                            android:text="@string/no_facility_selected"
                             android:textColor="#166534"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -625,7 +606,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:text="Tap to select destination facility:"
+                    android:text="@string/select_facility_hint"
                     android:textColor="@color/responder_text_secondary"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -692,7 +673,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Recipients: (1) Emergency Contact: Jane Doe (+1 555-0199) | (2) Mutual Aid Unit"
+                            android:text="@string/demo_recipients"
                             android:textColor="#334155"
                             android:textSize="12sp"
                             android:textStyle="bold" />
@@ -702,7 +683,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
-                            android:text="[SCENAR SIMULATED ALERT] Status EN ROUTE: Emergency reported at Building B, room 204. Responders in transit. Please stand by."
+                            android:text=""
                             android:textColor="#475569"
                             android:textSize="13sp" />
                     </LinearLayout>
@@ -733,6 +714,71 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:orientation="vertical" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- BLE Payload Preview (simulation only, nothing is transmitted) -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardBackgroundColor="@color/white"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:strokeColor="@color/responder_border"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ble_preview_title"
+                    android:textColor="@color/responder_text_primary"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/ble_preview_note"
+                    android:textColor="@color/responder_text_secondary"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/ble_location_note"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textColor="#B45309"
+                    android:textSize="11sp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/ble_preview_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:background="#F8FAFC"
+                    android:fontFamily="monospace"
+                    android:padding="12dp"
+                    android:textColor="#334155"
+                    android:textIsSelectable="true"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/ble_preview_size"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textColor="@color/responder_text_secondary"
+                    android:textSize="11sp" />
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

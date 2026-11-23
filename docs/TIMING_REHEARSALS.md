@@ -12,8 +12,8 @@
 | **0:00 - 0:25** (25s) | **Teammate 2** | Problem & Hook | Slide 1 & 2: Panicked 911 calls, lost information | ~50 words |
 | **0:25 - 0:55** (30s) | **Teammate 1** | Victim Intake Demo | Live App: Type/Speak emergency report, show AI extraction | ~65 words |
 | **0:55 - 1:15** (20s) | **Technical Lead** | Verification Gate & Schema | Review screen: human correction, consent check, JSON schema | ~40 words |
-| **1:15 - 2:05** (50s) | **Teammate 2** | Responder Console & Radar | Live App: Triage queue, Critical badges, Stepper advance, Tactical Radar, Navigation launch | ~110 words |
-| **2:05 - 2:35** (30s) | **Teammate 2** | Notification & BLE Experiments | Live App: Simulate SMS alerts, V4 Routing, Toggle V5 BLE beacon | ~65 words |
+| **1:15 - 2:05** (50s) | **Teammate 2** | Responder Console & Demo Map | Live App: Triage queue, priority badges, simulated status changes, schematic demo map, "Location unavailable" case | ~110 words |
+| **2:05 - 2:35** (30s) | **Teammate 2** | Simulated Notification, Facilities & BLE Preview | Live App: Notification simulation log, V4 demo facilities, V5 BLE payload preview | ~65 words |
 | **2:35 - 3:00** (25s) | **All / Teammate 2** | Safety Guardrails & Closing | Slide 9 & 10: Human-in-loop, zero hallucinations, wrap-up | ~50 words |
 
 **Total Words:** ~380 words (~130 words/minute — comfortable, clear speaking pace).
@@ -27,8 +27,8 @@
 | **0:00 - 0:45** (45s) | **Teammate 2** | Introduction & Problem Deep Dive | Cognitive overload in crisis, real statistics on dispatch call delays, danger of omitted scene hazards. |
 | **0:45 - 1:30** (45s) | **Teammate 1** | Victim Experience Demo | Walk through accessible intake, voice transcription, low-stress UI, offline draft preservation. |
 | **1:30 - 2:15** (45s) | **Technical Lead** | AI Architecture & Safety Guardrails | Negative prompting rules, why unknown values stay unknown, zero medical advice policy, data schema interoperability. |
-| **2:15 - 3:30** (75s) | **Teammate 2** | Responder Console Live Demo | Triage feed, critical priority calculation, interactive status stepper (`Dispatched` → `On Scene`), real-time audit logging, field notes, custom Canvas Tactical Radar. |
-| **3:30 - 4:20** (50s) | **Teammate 2** | V3, V4 & V5 Milestones | Contact notification simulation, nearest trauma center routing, offline BLE rescue mesh beacon demonstration. |
+| **2:15 - 3:30** (75s) | **Teammate 2** | Responder Console Live Demo | Triage feed, critical priority calculation, simulated status stepper (`Submitted` → `Closed`), timestamped timeline, field notes, schematic demo map and the no-GPS case. |
+| **3:30 - 4:20** (50s) | **Teammate 2** | V3, V4 & V5 Milestones | Contact notification simulation, nearby demo facilities, BLE payload preview (all simulated). |
 | **4:20 - 5:00** (40s) | **Team** | Impact, NG911 Roadmap & Closing | NENA i3 / CAD integration roadmap, open-source safety commitment, thank you and open for Q&A. |
 
 ---
@@ -63,7 +63,7 @@
 ### Q2: *"What happens if the caller has no internet connection?"*
 **Speaker:** Teammate 2  
 **Answer:**  
-> *"SCENAR was built with resilient fallbacks. If internet fails, our deterministic local engine processes the report offline without API calls. In catastrophic disaster scenarios where cellular infrastructure is wiped out, our V5 Bluetooth Low Energy (BLE) Rescue Mode broadcasts compressed distress packets across peer mesh hops to nearby rescuers."*
+> *"SCENAR was built with resilient fallbacks. If internet fails, our deterministic local engine processes the report offline without API calls. For disasters without cellular coverage, we have only a preview so far: the responder screen shows the compact payload a future Bluetooth mode could carry. It does not use Bluetooth or transmit anything yet."*
 
 ### Q3: *"How does this integrate with existing 911 Computer-Aided Dispatch (CAD) systems?"*
 **Speaker:** Technical Lead  
@@ -73,9 +73,9 @@
 ### Q4: *"Why do you require explicit consent for medical flags?"*
 **Speaker:** Teammate 1 / Teammate 2  
 **Answer:**  
-> *"Medical privacy is paramount. Even in emergencies, victims must have agency over their health data. Allergies, conditions, and medications stored in user profiles are flagged with an explicit consent toggle during the review screen. If the user unchecks consent, that data is instantly scrubbed from the dispatch payload."*
+> *"Medical privacy is paramount. Even in emergencies, victims must have agency over their health data. Every report reaches the responder through a sharing policy that removes medical details unless the reporter consented. The victim screen does not ask for that consent yet, so medical details are withheld from the responder by default."*
 
 ### Q5: *"Can first responders communicate back to the victim or their family?"*
 **Speaker:** Teammate 2  
 **Answer:**  
-> *"Yes. In our Responder Console, every status advance (such as transitioning from Dispatched to En Route) triggers an automated notification simulation to verified emergency contacts and mutual aid units, keeping families informed and preventing panic calls from jamming 911 phone lines."*
+> *"Not yet. The responder console can show what a message to emergency contacts could say, but only when the reporter allowed it, and it is a simulation: nothing is delivered. Real two-way messaging would need an approved integration."*
