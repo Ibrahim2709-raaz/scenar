@@ -17,19 +17,11 @@ public final class BluetoothPermissionPolicy {
         List<String> permissions = new ArrayList<>();
 
         if (sdkVersion >= Build.VERSION_CODES.S) {
-            permissions.add(
-                    Manifest.permission.BLUETOOTH_ADVERTISE
-            );
-            permissions.add(
-                    Manifest.permission.BLUETOOTH_CONNECT
-            );
+            permissions.add(Manifest.permission.BLUETOOTH_ADVERTISE);
+            permissions.add(Manifest.permission.BLUETOOTH_CONNECT);
         } else {
-            permissions.add(
-                    Manifest.permission.BLUETOOTH
-            );
-            permissions.add(
-                    Manifest.permission.BLUETOOTH_ADMIN
-            );
+            permissions.add(Manifest.permission.BLUETOOTH);
+            permissions.add(Manifest.permission.BLUETOOTH_ADMIN);
         }
 
         return Collections.unmodifiableList(permissions);
@@ -43,12 +35,40 @@ public final class BluetoothPermissionPolicy {
         }
 
         List<String> permissions = new ArrayList<>();
-        permissions.add(
-                Manifest.permission.BLUETOOTH_ADVERTISE
-        );
-        permissions.add(
-                Manifest.permission.BLUETOOTH_CONNECT
-        );
+        permissions.add(Manifest.permission.BLUETOOTH_ADVERTISE);
+        permissions.add(Manifest.permission.BLUETOOTH_CONNECT);
+
+        return Collections.unmodifiableList(permissions);
+    }
+
+    public static List<String> requiredScanManifestPermissions(
+            int sdkVersion
+    ) {
+        List<String> permissions = new ArrayList<>();
+
+        if (sdkVersion >= Build.VERSION_CODES.S) {
+            permissions.add(Manifest.permission.BLUETOOTH_SCAN);
+            permissions.add(Manifest.permission.BLUETOOTH_CONNECT);
+        } else {
+            permissions.add(Manifest.permission.BLUETOOTH);
+            permissions.add(Manifest.permission.BLUETOOTH_ADMIN);
+            permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+
+        return Collections.unmodifiableList(permissions);
+    }
+
+    public static List<String> requiredScanRuntimePermissions(
+            int sdkVersion
+    ) {
+        List<String> permissions = new ArrayList<>();
+
+        if (sdkVersion >= Build.VERSION_CODES.S) {
+            permissions.add(Manifest.permission.BLUETOOTH_SCAN);
+            permissions.add(Manifest.permission.BLUETOOTH_CONNECT);
+        } else if (sdkVersion >= Build.VERSION_CODES.M) {
+            permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        }
 
         return Collections.unmodifiableList(permissions);
     }
