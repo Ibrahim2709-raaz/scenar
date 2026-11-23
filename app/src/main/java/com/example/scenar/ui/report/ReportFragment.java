@@ -15,13 +15,14 @@ import androidx.fragment.app.Fragment;
 
 import com.example.scenar.MainActivity;
 import com.example.scenar.R;
-import com.example.scenar.ai.FakeIncidentAiService;
 import com.example.scenar.ai.IncidentAiService;
+import com.example.scenar.ai.IncidentAiServiceFactory;
 import com.example.scenar.model.IncidentReport;
 import com.example.scenar.repository.IncidentRepository;
 
 public class ReportFragment extends Fragment {
-    private final IncidentAiService incidentAiService = new FakeIncidentAiService();
+    private final IncidentAiService incidentAiService =
+            IncidentAiServiceFactory.createConfiguredService();
 
     @Nullable
     @Override
