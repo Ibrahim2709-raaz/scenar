@@ -2,4 +2,14 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="responder_primary">#0F172A</color>
+    <color name="responder_accent">#0284C7</color>
+    <color name="responder_critical">#DC2626</color>
+    <color name="responder_warning">#EA580C</color>
+    <color name="responder_success">#16A34A</color>
+    <color name="responder_card_bg">#FFFFFF</color>
+    <color name="responder_bg">#F1F5F9</color>
+    <color name="responder_border">#CBD5E1</color>
+    <color name="responder_text_primary">#0F172A</color>
+    <color name="responder_text_secondary">#64748B</color>
 </resources>
