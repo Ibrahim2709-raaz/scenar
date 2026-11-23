@@ -108,18 +108,23 @@ public class VictimReportFlowTest {
                     .perform(scrollTo(), replaceText("Blocked exit"), closeSoftKeyboard());
             onView(withHint("One condition per line"))
                     .perform(scrollTo(), replaceText(""), closeSoftKeyboard());
+            onView(withHint("One medical flag per line"))
+                    .perform(scrollTo(), replaceText("Allergies: Latex"), closeSoftKeyboard());
 
             tap("Save report as PDF");
             intended(hasAction(Intent.ACTION_CREATE_DOCUMENT));
             onView(withText("Save cancelled. Your report is still open.")).perform(scrollTo());
             onView(withText("Save report as PDF")).check(matches(isEnabled()));
 
+            tap("Prepare practice handoff");
+            visible("Practice handoff status");
             tap("Open responder demo");
             visible("Responder incident view");
             var report = IncidentRepository.getInstance().getCurrentReport();
             assertNotNull(report);
             assertEquals(Integer.valueOf(1), report.getPeopleAffected());
             assertTrue(report.getCriticalConditions().isEmpty());
+            assertTrue(report.getMedicalFlags().isEmpty());
             assertEquals(java.util.Collections.singletonList("Blocked exit"), report.getHazards());
             assertTrue(report.getMissingInformation().contains("Confirm the exact location"));
             assertTrue(report.getUncertainties().contains("Number of affected people requires confirmation"));

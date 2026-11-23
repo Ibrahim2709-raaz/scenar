@@ -26,6 +26,7 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -78,7 +79,7 @@ public final class VictimReportActivity extends Activity {
             "Fire or smoke", "Personal safety", "Other"
     };
 
-    private enum Screen { HOME, DETAILS, CONTEXT, REVIEW }
+    private enum Screen { HOME, DETAILS, CONTEXT, REVIEW, DISPATCH }
 
     private enum ExportFormat {
         PDF("application/pdf", "pdf"), JSON("application/json", "json");
@@ -113,6 +114,9 @@ public final class VictimReportActivity extends Activity {
         String medications = "";
         String conditions = "";
         IncidentReview review;
+        boolean shareMedicalFlags;
+        boolean simulateContactNotification;
+        PracticeDispatch practiceDispatch;
         String voiceNotice = "";
         String locationNotice = "";
         String generationNotice = "";
@@ -187,6 +191,7 @@ public final class VictimReportActivity extends Activity {
     @Override
     public void onBackPressed() {
         switch (draft.screen) {
+            case DISPATCH -> go(Screen.REVIEW);
             case REVIEW -> {
                 if (draft.export == null && draft.pendingExport == null) go(Screen.CONTEXT);
             }
@@ -219,6 +224,7 @@ public final class VictimReportActivity extends Activity {
             case DETAILS -> showDetails();
             case CONTEXT -> showContext();
             case REVIEW -> showReview();
+            case DISPATCH -> showDispatchStatus();
         }
     }
 
@@ -335,11 +341,35 @@ public final class VictimReportActivity extends Activity {
         add(content, jsonButton, 8);
         updateExportButtons();
         exportStatus = status(content, draft.export != null ? "Saving report…" : draft.exportNotice);
-        add(content, secondary("Open responder demo", this::openResponderDemo), 8);
+        addDispatchOptions();
         add(content, secondary("Edit incident details", () -> {
             if (draft.pendingExport == null && draft.export == null) go(Screen.CONTEXT);
         }), 8);
         add(content, secondary("Clear report and start over", this::confirmClear), 8);
+    }
+
+    private void addDispatchOptions() {
+        LinearLayout options = card(Color.WHITE);
+        heading(options, "Practice handoff");
+        add(options, text("The local responder demo receives your reviewed incident. Medical flags are "
+                + "optional. Check the other fields for medical details you want to keep private.",
+                14, MUTED, false), 8);
+        add(options, checkBox("Include reviewed medical flags", draft.shareMedicalFlags,
+                checked -> draft.shareMedicalFlags = checked), 8);
+        add(options, checkBox("Simulate a trusted-contact notification", draft.simulateContactNotification,
+                checked -> draft.simulateContactNotification = checked), 4);
+        add(options, primary("Prepare practice handoff", this::preparePracticeHandoff), 8);
+        add(content, options, 12);
+    }
+
+    private CheckBox checkBox(String label, boolean checked, Consumer<Boolean> update) {
+        CheckBox box = new CheckBox(this);
+        box.setText(label);
+        box.setTextColor(INK);
+        box.setMinHeight(dp(48));
+        box.setChecked(checked);
+        box.setOnCheckedChangeListener((button, selected) -> update.accept(selected));
+        return box;
     }
 
     private List<ReportPdf.Field> reportFields(IncidentReport reviewed) {
@@ -363,11 +393,31 @@ public final class VictimReportActivity extends Activity {
         return value == null ? "" : value.toString();
     }
 
-    private void openResponderDemo() {
+    private void preparePracticeHandoff() {
         if (draft.pendingExport != null || draft.export != null) return;
         IncidentReport reviewed = validatedReport();
         if (reviewed == null) return;
-        IncidentRepository.getInstance().setCurrentReport(reviewed);
+        draft.practiceDispatch = new PracticeDispatch(reviewed, draft.shareMedicalFlags,
+                draft.simulateContactNotification);
+        go(Screen.DISPATCH);
+    }
+
+    private void showDispatchStatus() {
+        title("Practice handoff status");
+        LinearLayout status = card(Color.WHITE);
+        heading(status, "Report ready for local responder demo");
+        fact(status, "Dispatch", "Simulated only. No emergency services contacted.");
+        fact(status, "Medical flags", draft.practiceDispatch.includesMedicalFlags()
+                ? "Included with consent." : "None included in the handoff.");
+        fact(status, "Trusted contact", draft.practiceDispatch.contactNotificationSimulated()
+                ? "Notification simulated. No message sent." : "Notification skipped.");
+        add(content, status, 14);
+        add(content, primary("Open responder demo", this::openResponderDemo), 12);
+        add(content, secondary("Back to review", () -> go(Screen.REVIEW)), 8);
+    }
+
+    private void openResponderDemo() {
+        IncidentRepository.getInstance().setCurrentReport(draft.practiceDispatch.sharedReport());
         setResult(RESULT_OK);
         finish();
     }
@@ -540,6 +590,8 @@ public final class VictimReportActivity extends Activity {
             draft.report = report;
             draft.review = new IncidentReview(
                     report.toReviewedIncident(CATEGORY_LABELS[draft.category], report.summary()));
+            draft.shareMedicalFlags = false;
+            draft.simulateContactNotification = false;
             go(Screen.REVIEW);
         }));
     }
