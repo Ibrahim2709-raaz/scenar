@@ -1,6 +1,7 @@
 package com.example.scenar.ui.victim;
 
 import static androidx.test.espresso.Espresso.onView;
+import static androidx.test.espresso.Espresso.pressBack;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.action.ViewActions.closeSoftKeyboard;
 import static androidx.test.espresso.action.ViewActions.replaceText;
@@ -11,6 +12,7 @@ import static androidx.test.espresso.intent.Intents.intending;
 import static androidx.test.espresso.intent.matcher.IntentMatchers.hasAction;
 import static androidx.test.espresso.matcher.ViewMatchers.isChecked;
 import static androidx.test.espresso.matcher.ViewMatchers.isEnabled;
+import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withHint;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
@@ -41,11 +43,14 @@ import androidx.test.uiautomator.Until;
 import com.example.scenar.MainActivity;
 import com.example.scenar.R;
 import com.example.scenar.model.SharingConsent;
+import com.example.scenar.profile.EmergencyProfile;
+import com.example.scenar.profile.EmergencyProfileRepository;
 import com.example.scenar.repository.IncidentRepository;
 import com.example.scenar.repository.SimulatedDispatchRepository;
 import com.example.scenar.ui.responder.ResponderIncident;
 import com.example.scenar.ui.responder.ResponderQueue;
 
+import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -58,9 +63,25 @@ public class VictimReportFlowTest {
     private static final long TIMEOUT_MS = 15_000;
     private static final String DESCRIPTION = "Two people are near smoke after part of a ceiling collapsed.";
     private final UiDevice device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+    private final EmergencyProfileRepository profiles = EmergencyProfileRepository.getInstance(
+            InstrumentationRegistry.getInstrumentation().getTargetContext());
+    private EmergencyProfile originalProfile;
 
     @Rule
     public final IntentsRule intents = new IntentsRule();
+
+    @After
+    public void restoreProfile() {
+        if (originalProfile == null) return;
+        if (originalProfile.isEmpty()) profiles.clear();
+        else profiles.save(originalProfile);
+    }
+
+    private void useProfile(EmergencyProfile profile) {
+        originalProfile = profiles.load();
+        if (profile.isEmpty()) profiles.clear();
+        else profiles.save(profile);
+    }
 
     @Test
     public void acceptsAndDeniesLocationAndKeepsManualAddressAvailable() {
@@ -152,6 +173,8 @@ public class VictimReportFlowTest {
 
     @Test
     public void selectedVictimConsentReachesResponderAndEnablesContactSimulation() {
+        useProfile(new EmergencyProfile(
+                "Jordan", "", "O+", "", "", "", "Needs large print", "Casey", "", "+1 250 555 0100"));
         try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
             onView(withId(R.id.report_emergency_button)).perform(click());
             enterDescription();
@@ -163,9 +186,9 @@ public class VictimReportFlowTest {
             onView(withHint("One medical flag per line"))
                     .perform(scrollTo(), replaceText("Allergies: Latex"), closeSoftKeyboard());
 
-            tap("Include reviewed location");
-            tap("Include reviewed medical flags");
-            tap("Allow simulated trusted-contact notifications");
+            tap("Share current location");
+            tap("Share medical information");
+            tap("Notify emergency contact");
             tap("Prepare practice handoff");
             tap("Open responder demo");
             visible("Responder incident view");
@@ -173,7 +196,8 @@ public class VictimReportFlowTest {
             var incident = victimIncident();
             assertEquals(new SharingConsent(true, true, true), incident.getConsent());
             assertEquals("Practice Hall", incident.getReport().getLocationDescription());
-            assertEquals(java.util.Collections.singletonList("Allergies: Latex"),
+            assertEquals(java.util.List.of("Allergies: Latex", "Blood type: O+",
+                            "Accessibility needs: Needs large print"),
                     incident.getMedicalFlagsToShow());
             onView(withText(containsString("Allergies: Latex"))).perform(scrollTo());
             onView(withId(R.id.btn_simulate_notification)).check(matches(isEnabled()));
@@ -185,9 +209,9 @@ public class VictimReportFlowTest {
     @Test
     public void regeneratingEditedReportClearsAllHandoffConsent() {
         String[] consentLabels = {
-                "Include reviewed location",
-                "Include reviewed medical flags",
-                "Allow simulated trusted-contact notifications"
+                "Share current location",
+                "Share medical information",
+                "Notify emergency contact"
         };
         try (ActivityScenario<VictimReportActivity> scenario =
                      ActivityScenario.launch(VictimReportActivity.class)) {
@@ -209,6 +233,57 @@ public class VictimReportFlowTest {
                 onView(withText(label)).perform(scrollTo()).check(matches(not(isChecked())));
             }
         }
+    }
+
+    @Test
+    public void missingProfileAllowsHandoffButMissingContactBlocksNotification() {
+        useProfile(EmergencyProfile.empty());
+        try (ActivityScenario<VictimReportActivity> scenario =
+                     ActivityScenario.launch(VictimReportActivity.class)) {
+            generateReportForProfileReview();
+            onView(withText("No emergency profile saved.")).perform(scrollTo())
+                    .check(matches(isDisplayed()));
+            tap("Notify emergency contact");
+            tap("Prepare practice handoff");
+            visible("Emergency contact unavailable");
+            onView(withText("Edit saved profile")).check(matches(isDisplayed()));
+            onView(withText("Back to review")).perform(click());
+            tap("Notify emergency contact");
+            tap("Prepare practice handoff");
+            visible("Practice handoff status");
+        }
+    }
+
+    @Test
+    public void savedProfileChangesReloadAfterReturningAndSurviveRecreation() {
+        useProfile(new EmergencyProfile("Original name", "", "", "", "", "", "", "", "", ""));
+        try (ActivityScenario<VictimReportActivity> scenario =
+                     ActivityScenario.launch(VictimReportActivity.class)) {
+            generateReportForProfileReview();
+            onView(withText("Original name")).perform(scrollTo()).check(matches(isDisplayed()));
+            tap("Share medical information");
+            tap("Edit profile");
+            onView(withId(R.id.preferred_name_input))
+                    .perform(scrollTo(), replaceText("Updated name"), closeSoftKeyboard());
+            onView(withId(R.id.save_profile_button)).perform(scrollTo(), click());
+            pressBack();
+            visible("Review your report");
+            onView(withText("Updated name")).perform(scrollTo()).check(matches(isDisplayed()));
+            onView(withText("Share medical information")).perform(scrollTo())
+                    .check(matches(not(isChecked())));
+            tap("Share medical information");
+            scenario.recreate();
+            onView(withText("Updated name")).perform(scrollTo()).check(matches(isDisplayed()));
+            onView(withText("Share medical information")).perform(scrollTo())
+                    .check(matches(isChecked()));
+        }
+    }
+
+    private void generateReportForProfileReview() {
+        enterDescription();
+        tap("Continue");
+        tap("Generate practice report");
+        visible("Review your report");
     }
 
     private static ResponderIncident victimIncident() {
