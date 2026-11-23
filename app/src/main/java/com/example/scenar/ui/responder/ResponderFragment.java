@@ -423,6 +423,7 @@ public class ResponderFragment extends Fragment {
             TextView info = new TextView(requireContext());
             info.setText(facility.address()
                     + "\n" + location.facilityDistanceText(facility)
+                    + "\n" + location.facilityEtaText(facility)
                     + "\n" + ResponderCopy.FACILITY_SOURCE_PREFIX + facility.source()
                     + " (reviewed " + facility.lastReviewed() + ")");
             info.setTextSize(12f);

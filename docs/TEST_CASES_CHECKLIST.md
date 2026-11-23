@@ -12,11 +12,11 @@ Fill in the Status column after running the Gradle commands above.
 
 | ID | Test class | What it checks | Status |
 |---|---|---|---|
-| UT-01 | `ResponderUnitTest` | Advance button follows the shared `DispatchStatus` order; invalid transitions are refused; changes go through `SimulatedDispatchRepository` | |
+| UT-01 | `ResponderUnitTest` | Advance button follows the shared `DispatchStatus` order; invalid transitions are refused; every status change is stored in and loaded from `SimulatedDispatchRepository` | |
 | UT-02 | `ResponderUnitTest` | Victim handoff is submitted once; demo incidents are seeded once and marked as demo | |
 | UT-03 | `ResponderUnitTest` | Priority calculation; notes; facility distance uses the shared `EmergencyFacility` | |
 | UT-04 | `ResponderUnitTest` | Sample JSON parsing and round trip | |
-| UT-05 | `MissingCoordinatesTest` | No GPS shows "Location unavailable"; navigation, coordinate copying, facility distances and BLE location are all off; no coordinates are substituted | |
+| UT-05 | `MissingCoordinatesTest` | No GPS shows "Location unavailable"; navigation, coordinate copying, facility distance and ETA, and BLE location are all off; no fallback coordinates are used | |
 | UT-06 | `MedicalConsentTest` | Withheld medical consent keeps medical flags out of the dashboard and BLE preview; only the filtered dispatch record is used | |
 | UT-07 | `ResponderSimulationLabelsTest` | Status labels, timeline, notification log, facilities and BLE preview are marked as simulated or fictional; responder text never claims anything was sent, verified, broadcasting or live | |
 | UT-08 | `BlePayloadPreviewTest` | BLE preview JSON is built with Gson: quotes, newlines and backslashes are escaped; size is measured in UTF-8; unknown values are left out | |
@@ -61,7 +61,7 @@ Fill in the Status column after running the Gradle commands above.
 - [ ] Open the demo "Fire or smoke" (no GPS).
 - [ ] "Location unavailable" is shown; the map is hidden.
 - [ ] Navigation and copy buttons are disabled.
-- [ ] Facilities show "Distance unavailable (no GPS location)" and the directions button is disabled.
+- [ ] Facilities show "Distance unavailable (no GPS location)" and "ETA unavailable (no GPS location)", and the directions button is disabled.
 - [ ] The BLE preview has no `lat`/`lon` and says location was left out.
 
 ---
@@ -81,7 +81,7 @@ Fill in the Status column after running the Gradle commands above.
 
 ### TC-10: Demo facilities
 - [ ] Three fictional facilities are listed with "Source: Fictional demo data, not a real facility".
-- [ ] With GPS, each shows a straight-line distance estimate; tapping one selects it.
+- [ ] With GPS, each shows a straight-line distance and a rough demo ETA; tapping one selects it.
 
 ### TC-11: BLE payload preview
 - [ ] The card says "Preview only. Bluetooth is not used and nothing is transmitted."

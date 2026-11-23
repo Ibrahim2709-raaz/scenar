@@ -17,13 +17,16 @@ public final class ResponderCopy {
     public static final String LOCATION_UNAVAILABLE = "Location unavailable";
     public static final String LOCATION_UNAVAILABLE_DETAIL =
             "No GPS location in this report. Navigation, coordinate copying, facility"
-                    + " distances and location in the BLE preview are turned off.";
+                    + " distance and ETA, and location in the BLE preview are turned off.";
     public static final String LOCATION_TEXT_ONLY_PREFIX = "Reported address (text only): ";
     public static final String MAP_COORDINATES_PREFIX = "Reported GPS (demo map, not tracked): ";
     public static final String FACILITY_DISTANCE_UNAVAILABLE =
             "Distance unavailable (no GPS location)";
     public static final String FACILITY_DISTANCE_FORMAT =
             "%.1f km straight-line estimate (demo data)";
+    public static final String FACILITY_ETA_UNAVAILABLE = "ETA unavailable (no GPS location)";
+    public static final String FACILITY_ETA_FORMAT =
+            "ETA about %d min (rough demo estimate at 35 km/h, straight line)";
     public static final String NAVIGATION_UNAVAILABLE =
             "Navigation is off because this report has no GPS location.";
 

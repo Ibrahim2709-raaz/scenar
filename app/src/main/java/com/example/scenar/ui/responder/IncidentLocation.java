@@ -73,4 +73,23 @@ public final class IncidentLocation {
         if (km == null) return ResponderCopy.FACILITY_DISTANCE_UNAVAILABLE;
         return String.format(Locale.ROOT, ResponderCopy.FACILITY_DISTANCE_FORMAT, km);
     }
+
+    /**
+     * Rough travel time in minutes from the straight-line distance at
+     * {@link #DEMO_TRAVEL_SPEED_KMH}, or null when the incident has no GPS location.
+     */
+    public Integer etaMinutesTo(EmergencyFacility facility) {
+        Double km = distanceKmTo(facility);
+        if (km == null) return null;
+        return Math.max(1, (int) Math.round(km / DEMO_TRAVEL_SPEED_KMH * 60.0));
+    }
+
+    public String facilityEtaText(EmergencyFacility facility) {
+        Integer minutes = etaMinutesTo(facility);
+        if (minutes == null) return ResponderCopy.FACILITY_ETA_UNAVAILABLE;
+        return String.format(Locale.ROOT, ResponderCopy.FACILITY_ETA_FORMAT, minutes);
+    }
+
+    /** Assumed speed for the demo ETA estimate. Not based on traffic or roads. */
+    public static final double DEMO_TRAVEL_SPEED_KMH = 35.0;
 }

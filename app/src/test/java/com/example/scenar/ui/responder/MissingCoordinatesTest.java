@@ -43,13 +43,16 @@ public class MissingCoordinatesTest {
     }
 
     @Test
-    public void facilityDistanceIsNotCalculatedWithoutCoordinates() {
+    public void facilityDistanceAndEtaAreUnavailableWithoutCoordinates() {
         IncidentLocation location = IncidentLocation.of(reportWithAddressOnly());
 
         for (EmergencyFacility facility : DemoFacilities.all()) {
             assertNull(location.distanceKmTo(facility));
             assertEquals(ResponderCopy.FACILITY_DISTANCE_UNAVAILABLE,
                     location.facilityDistanceText(facility));
+            assertNull(location.etaMinutesTo(facility));
+            assertEquals(ResponderCopy.FACILITY_ETA_UNAVAILABLE,
+                    location.facilityEtaText(facility));
         }
     }
 
@@ -70,6 +73,19 @@ public class MissingCoordinatesTest {
         assertFalse(IncidentLocation.of(notANumber).isAvailable());
 
         assertFalse(IncidentLocation.of(null).isAvailable());
+    }
+
+    @Test
+    public void noSanFranciscoOrOtherFallbackCoordinatesAreUsed() {
+        IncidentLocation location = IncidentLocation.of(reportWithAddressOnly());
+        EmergencyFacility nearest = DemoFacilities.all().get(0);
+
+        // The old code fell back to 37.77492, -122.41941. Nothing may be computed now.
+        assertNull(location.distanceKmTo(nearest));
+        assertNull(location.etaMinutesTo(nearest));
+        assertFalse(location.coordinatesText().contains("37.7"));
+        assertFalse(BlePayloadPreview.from("INC-TEST", reportWithAddressOnly())
+                .getJson().contains("37.7"));
     }
 
     @Test

@@ -61,7 +61,7 @@
     <string name="status_action_close">Close</string>
     <string name="map_title">Incident location (schematic demo map)</string>
     <string name="location_unavailable">Location unavailable</string>
-    <string name="location_unavailable_detail">No GPS location in this report. Navigation, coordinate copying, facility distances and location in the BLE preview are turned off.</string>
+    <string name="location_unavailable_detail">No GPS location in this report. Navigation, coordinate copying, facility distance and ETA, and location in the BLE preview are turned off.</string>
     <string name="no_facility_selected">No facility selected.</string>
     <string name="select_facility_hint">Tap a facility to select it:</string>
     <string name="demo_recipients">Demo recipients (fictional): Demo Contact A (555-0199) and a demo mutual aid desk</string>

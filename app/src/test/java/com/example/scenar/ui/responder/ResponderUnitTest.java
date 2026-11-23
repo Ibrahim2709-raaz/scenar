@@ -142,6 +142,39 @@ public class ResponderUnitTest {
         assertNotNull(km);
         assertTrue("Nearest demo facility should be within 2 km", km > 0 && km < 2.0);
         assertTrue(location.facilityDistanceText(nearby.get(0)).contains("km"));
+
+        Integer eta = location.etaMinutesTo(nearby.get(0));
+        assertNotNull(eta);
+        assertTrue("ETA should be between 1 and 15 min", eta >= 1 && eta <= 15);
+        assertTrue(location.facilityEtaText(nearby.get(0)).contains("estimate"));
+    }
+
+    @Test
+    public void statusChangedInRepositoryIsLoadedFromDispatchRecord() {
+        ResponderIncident incident = queue.submit(new IncidentReport(),
+                SharingConsent.shareNothing(), repository);
+
+        // Change the status through the shared repository directly.
+        repository.updateStatus(incident.getIncidentId(), DispatchStatus.REVIEWING);
+
+        List<ResponderIncident> synced = queue.sync(repository);
+        assertSame(incident, synced.get(0));
+        assertEquals(DispatchStatus.REVIEWING, incident.getStatus());
+        assertSame(repository.getIncidents().get(0), incident.getRecord());
+        assertTrue(incident.getTimeline().get(0).getTitle().startsWith("Simulated status change"));
+    }
+
+    @Test
+    public void everyStatusStepIsStoredInTheSharedRepository() {
+        ResponderIncident incident = queue.submit(new IncidentReport(),
+                SharingConsent.shareNothing(), repository);
+
+        for (DispatchStatus step : new DispatchStatus[] {
+                DispatchStatus.REVIEWING, DispatchStatus.DISPATCHED_SIMULATION, DispatchStatus.CLOSED}) {
+            assertTrue(queue.updateStatus(repository, incident, step));
+            assertEquals(step, repository.getIncidents().get(0).getStatus());
+            assertEquals(step, incident.getStatus());
+        }
     }
 
     @Test
