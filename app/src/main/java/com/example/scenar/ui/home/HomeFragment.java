@@ -29,5 +29,12 @@ public class HomeFragment extends Fragment {
         view.findViewById(R.id.report_emergency_button).setOnClickListener(ignored ->
                 ((MainActivity) requireActivity()).showReport()
         );
+
+        View responderBtn = view.findViewById(R.id.open_responder_button);
+        if (responderBtn != null) {
+            responderBtn.setOnClickListener(ignored ->
+                    ((MainActivity) requireActivity()).showResponderDashboard()
+            );
+        }
     }
 }

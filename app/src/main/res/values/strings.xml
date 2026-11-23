@@ -24,4 +24,30 @@
     <string name="responder_title">Responder incident view</string>
     <string name="simulated_dispatch_status">SIMULATED DISPATCH — REPORT READY</string>
     <string name="start_new_report">Start a new report</string>
+
+    <!-- Responder Dashboard & Delivery Extensions -->
+    <string name="open_responder_dashboard">Open Responder Dashboard</string>
+    <string name="responder_console_title">SCENAR Dispatcher Console</string>
+    <string name="responder_subtitle">First Responder Incident Management &amp; Dispatch</string>
+    <string name="active_incident_label">Active Incident</string>
+    <string name="incident_queue_title">Active Incident Feed</string>
+    <string name="advance_status">Advance Status</string>
+    <string name="status_timeline_label">Dispatch Timeline &amp; Audit Log</string>
+    <string name="add_note">Add Field Note</string>
+    <string name="note_hint">Enter responder on-scene note...</string>
+    <string name="open_navigation">Navigate in Google Maps</string>
+    <string name="copy_coordinates">Copy Coordinates</string>
+    <string name="coordinates_copied">Coordinates copied to clipboard</string>
+    <string name="contact_notification_title">Automated Contact Notification Simulation</string>
+    <string name="contact_notification_desc">Simulates automated SMS dispatch alerts to designated ICE contacts and mutual aid agencies.</string>
+    <string name="simulate_notification_button">Simulate Alert Broadcast</string>
+    <string name="simulated_notification_success">Alert broadcast simulated! 3 recipients notified via SMS gateway.</string>
+    <string name="experiments_title">Milestone Experiments (V4 &amp; V5)</string>
+    <string name="routing_experiment_title">V4: Nearest Facility &amp; Route Guidance</string>
+    <string name="ble_experiment_title">V5: Offline BLE Rescue Beacon</string>
+    <string name="toggle_ble_beacon">Toggle BLE Rescue Beacon</string>
+    <string name="load_sample_json">Load Sample JSON</string>
+    <string name="json_view_title">Interoperability JSON Contract</string>
+    <string name="copy_json">Copy JSON</string>
+    <string name="json_copied">JSON copied to clipboard</string>
 </resources>
