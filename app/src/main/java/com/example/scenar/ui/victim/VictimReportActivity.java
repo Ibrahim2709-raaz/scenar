@@ -37,8 +37,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.example.scenar.ai.FakeIncidentAiService;
 import com.example.scenar.ai.IncidentAiService;
+import com.example.scenar.ai.IncidentAiServiceFactory;
 import com.example.scenar.model.IncidentReport;
 import com.example.scenar.repository.IncidentRepository;
 
@@ -125,7 +125,8 @@ public final class VictimReportActivity extends Activity {
     }
 
     private Draft draft;
-    private final IncidentAiService incidentAiService = new FakeIncidentAiService();
+    private final IncidentAiService incidentAiService =
+            IncidentAiServiceFactory.createConfiguredService();
     private final Handler handler = new Handler(Looper.getMainLooper());
     private CancellationSignal locationRequest;
     private LinearLayout content;

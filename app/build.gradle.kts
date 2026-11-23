@@ -16,10 +16,19 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "SCENAR_AI_ENDPOINT", "\"\"")
     }
 
     buildTypes {
+        debug {
+            buildConfigField(
+                "String",
+                "SCENAR_AI_ENDPOINT",
+                "\"http://10.0.2.2:3000/api/incident\""
+            )
+        }
         release {
+            buildConfigField("String", "SCENAR_AI_ENDPOINT", "\"\"")
             optimization {
                 enable = true
                 packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
@@ -29,6 +38,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+    buildFeatures {
+        buildConfig = true
     }
 }
 
