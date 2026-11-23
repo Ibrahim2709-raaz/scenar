@@ -32,5 +32,53 @@
     </style>
 
     <style name="Theme.SCENAR" parent="Base.Theme.SCENAR" />
+    <style
+        name="Theme.SCENAR.Starting"
+        parent="Theme.SplashScreen.IconBackground">
+
+        <item name="windowSplashScreenBackground">@color/scenar_navy</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_mark</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/scenar_blue</item>
+        <item name="windowSplashScreenAnimationDuration">250</item>
+        <item name="postSplashScreenTheme">@style/Theme.SCENAR</item>
+
+    </style>
+
+    <style
+        name="ProfileSectionTitle"
+        parent="TextAppearance.Material3.TitleMedium">
+
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">26dp</item>
+        <item name="android:layout_marginBottom">10dp</item>
+        <item name="android:textColor">@color/scenar_text_primary</item>
+        <item name="android:textStyle">bold</item>
+
+    </style>
+
+    <style
+        name="ProfileTextInputLayout"
+        parent="Widget.Material3.TextInputLayout.OutlinedBox">
+
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">12dp</item>
+        <item name="boxCornerRadiusTopStart">14dp</item>
+        <item name="boxCornerRadiusTopEnd">14dp</item>
+        <item name="boxCornerRadiusBottomStart">14dp</item>
+        <item name="boxCornerRadiusBottomEnd">14dp</item>
+
+    </style>
+
+    <style name="ProfileMultilineInput">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:gravity">top|start</item>
+        <item name="android:inputType">textCapSentences|textMultiLine</item>
+        <item name="android:maxLines">5</item>
+        <item name="android:minLines">2</item>
+        <item name="android:maxLength">500</item>
+    </style>
 
 </resources>

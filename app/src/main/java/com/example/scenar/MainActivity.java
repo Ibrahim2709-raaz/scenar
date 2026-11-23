@@ -17,6 +17,7 @@ import com.example.scenar.ui.home.HomeFragment;
 import com.example.scenar.ui.responder.ResponderFragment;
 import com.example.scenar.ui.review.ReviewFragment;
 import com.example.scenar.ui.victim.VictimReportActivity;
+import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
     private final ActivityResultLauncher<Intent> victimReporter =
@@ -33,7 +34,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
+
         WindowCompat.enableEdgeToEdge(getWindow());
         setContentView(R.layout.activity_main);
 
