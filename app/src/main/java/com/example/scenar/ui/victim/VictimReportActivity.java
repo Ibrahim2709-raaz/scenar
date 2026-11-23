@@ -40,8 +40,11 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.scenar.ai.IncidentAiService;
 import com.example.scenar.ai.IncidentAiServiceFactory;
+import com.example.scenar.model.DispatchRecord;
 import com.example.scenar.model.IncidentReport;
+import com.example.scenar.model.SharingConsent;
 import com.example.scenar.repository.IncidentRepository;
+import com.example.scenar.repository.SimulatedDispatchRepository;
 
 import org.json.JSONException;
 
@@ -58,6 +61,7 @@ import java.util.concurrent.CompletionException;
 import java.util.function.Consumer;
 
 public final class VictimReportActivity extends Activity {
+    public static final String EXTRA_DISPATCH_ID = "com.example.scenar.extra.DISPATCH_ID";
     private static final int INK = 0xff18251f;
     private static final int GREEN = 0xff19533c;
     private static final int MUTED = 0xff4e5d54;
@@ -114,6 +118,7 @@ public final class VictimReportActivity extends Activity {
         String medications = "";
         String conditions = "";
         IncidentReview review;
+        boolean shareLocation;
         boolean shareMedicalFlags;
         boolean simulateContactNotification;
         PracticeDispatch practiceDispatch;
@@ -352,12 +357,15 @@ public final class VictimReportActivity extends Activity {
     private void addDispatchOptions() {
         LinearLayout options = card(Color.WHITE);
         heading(options, "Practice handoff");
-        add(options, text("The local responder demo receives your reviewed incident. Medical flags are "
-                + "optional. Check the other fields for medical details you want to keep private.",
+        add(options, text("The local responder demo receives your reviewed incident. These choices "
+                + "control the separate location and medical fields. Check the other fields for "
+                + "private details before sharing.",
                 14, MUTED, false), 8);
+        add(options, checkBox("Include reviewed location", draft.shareLocation,
+                checked -> draft.shareLocation = checked), 8);
         add(options, checkBox("Include reviewed medical flags", draft.shareMedicalFlags,
                 checked -> draft.shareMedicalFlags = checked), 8);
-        add(options, checkBox("Simulate a trusted-contact notification", draft.simulateContactNotification,
+        add(options, checkBox("Allow simulated trusted-contact notifications", draft.simulateContactNotification,
                 checked -> draft.simulateContactNotification = checked), 4);
         add(options, primary("Prepare practice handoff", this::preparePracticeHandoff), 8);
         add(content, options, 12);
@@ -398,8 +406,8 @@ public final class VictimReportActivity extends Activity {
         if (draft.pendingExport != null || draft.export != null) return;
         IncidentReport reviewed = validatedReport();
         if (reviewed == null) return;
-        draft.practiceDispatch = new PracticeDispatch(reviewed, draft.shareMedicalFlags,
-                draft.simulateContactNotification);
+        draft.practiceDispatch = new PracticeDispatch(reviewed, new SharingConsent(
+                draft.shareLocation, draft.shareMedicalFlags, draft.simulateContactNotification));
         go(Screen.DISPATCH);
     }
 
@@ -408,18 +416,22 @@ public final class VictimReportActivity extends Activity {
         LinearLayout status = card(Color.WHITE);
         heading(status, "Report ready for local responder demo");
         fact(status, "Dispatch", "Simulated only. No emergency services contacted.");
+        fact(status, "Location", draft.practiceDispatch.includesLocation()
+                ? "Included with consent." : "None included in the handoff.");
         fact(status, "Medical flags", draft.practiceDispatch.includesMedicalFlags()
                 ? "Included with consent." : "None included in the handoff.");
-        fact(status, "Trusted contact", draft.practiceDispatch.contactNotificationSimulated()
-                ? "Notification simulated. No message sent." : "Notification skipped.");
+        fact(status, "Trusted contact", draft.practiceDispatch.allowsContactNotification()
+                ? "Responder can simulate a notification." : "Notification permission withheld.");
         add(content, status, 14);
         add(content, primary("Open responder demo", this::openResponderDemo), 12);
         add(content, secondary("Back to review", () -> go(Screen.REVIEW)), 8);
     }
 
     private void openResponderDemo() {
-        IncidentRepository.getInstance().setCurrentReport(draft.practiceDispatch.sharedReport());
-        setResult(RESULT_OK);
+        if (isFinishing()) return;
+        DispatchRecord record = draft.practiceDispatch.submit(SimulatedDispatchRepository.getInstance());
+        IncidentRepository.getInstance().setCurrentReport(record.getReport());
+        setResult(RESULT_OK, new Intent().putExtra(EXTRA_DISPATCH_ID, record.getIncidentId()));
         finish();
     }
 

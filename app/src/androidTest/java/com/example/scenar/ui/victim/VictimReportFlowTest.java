@@ -11,9 +11,13 @@ import static androidx.test.espresso.intent.Intents.intending;
 import static androidx.test.espresso.intent.matcher.IntentMatchers.hasAction;
 import static androidx.test.espresso.matcher.ViewMatchers.isEnabled;
 import static androidx.test.espresso.matcher.ViewMatchers.withHint;
+import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.Manifest;
@@ -34,13 +38,19 @@ import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.Until;
 
 import com.example.scenar.MainActivity;
+import com.example.scenar.R;
+import com.example.scenar.model.SharingConsent;
 import com.example.scenar.repository.IncidentRepository;
+import com.example.scenar.repository.SimulatedDispatchRepository;
+import com.example.scenar.ui.responder.ResponderIncident;
+import com.example.scenar.ui.responder.ResponderQueue;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @RunWith(AndroidJUnit4.class)
 public class VictimReportFlowTest {
@@ -108,6 +118,8 @@ public class VictimReportFlowTest {
                     .perform(scrollTo(), replaceText("Blocked exit"), closeSoftKeyboard());
             onView(withHint("One condition per line"))
                     .perform(scrollTo(), replaceText(""), closeSoftKeyboard());
+            onView(withHint("Leave blank if location is unknown"))
+                    .perform(scrollTo(), replaceText("Practice Hall"), closeSoftKeyboard());
             onView(withHint("One medical flag per line"))
                     .perform(scrollTo(), replaceText("Allergies: Latex"), closeSoftKeyboard());
 
@@ -120,18 +132,66 @@ public class VictimReportFlowTest {
             visible("Practice handoff status");
             tap("Open responder demo");
             visible("Responder incident view");
-            var report = IncidentRepository.getInstance().getCurrentReport();
-            assertNotNull(report);
+            var incident = victimIncident();
+            var report = incident.getReport();
+            assertEquals(SharingConsent.shareNothing(), incident.getConsent());
+            assertNull(report.getLocationDescription());
             assertEquals(Integer.valueOf(1), report.getPeopleAffected());
             assertTrue(report.getCriticalConditions().isEmpty());
             assertTrue(report.getMedicalFlags().isEmpty());
             assertEquals(java.util.Collections.singletonList("Blocked exit"), report.getHazards());
             assertTrue(report.getMissingInformation().contains("Confirm the exact location"));
             assertTrue(report.getUncertainties().contains("Number of affected people requires confirmation"));
-            onView(withText("Blocked exit")).perform(scrollTo());
+            onView(withText(containsString("Blocked exit"))).perform(scrollTo());
+            onView(withId(R.id.btn_simulate_notification)).check(matches(not(isEnabled())));
         } finally {
-            IncidentRepository.getInstance().clear();
+            clearHandoff();
         }
+    }
+
+    @Test
+    public void selectedVictimConsentReachesResponderAndEnablesContactSimulation() {
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            onView(withText("Report emergency")).perform(click());
+            enterDescription();
+            tap("Continue");
+            tap("Generate practice report");
+            visible("Review your report");
+            onView(withHint("Leave blank if location is unknown"))
+                    .perform(scrollTo(), replaceText("Practice Hall"), closeSoftKeyboard());
+            onView(withHint("One medical flag per line"))
+                    .perform(scrollTo(), replaceText("Allergies: Latex"), closeSoftKeyboard());
+
+            tap("Include reviewed location");
+            tap("Include reviewed medical flags");
+            tap("Allow simulated trusted-contact notifications");
+            tap("Prepare practice handoff");
+            tap("Open responder demo");
+            visible("Responder incident view");
+
+            var incident = victimIncident();
+            assertEquals(new SharingConsent(true, true, true), incident.getConsent());
+            assertEquals("Practice Hall", incident.getReport().getLocationDescription());
+            assertEquals(java.util.Collections.singletonList("Allergies: Latex"),
+                    incident.getMedicalFlagsToShow());
+            onView(withText(containsString("Allergies: Latex"))).perform(scrollTo());
+            onView(withId(R.id.btn_simulate_notification)).check(matches(isEnabled()));
+        } finally {
+            clearHandoff();
+        }
+    }
+
+    private static ResponderIncident victimIncident() {
+        var incidents = ResponderQueue.getInstance().sync(SimulatedDispatchRepository.getInstance())
+                .stream().filter(incident -> !incident.isDemo()).collect(Collectors.toList());
+        assertEquals(1, incidents.size());
+        return incidents.get(0);
+    }
+
+    private static void clearHandoff() {
+        IncidentRepository.getInstance().clear();
+        SimulatedDispatchRepository.getInstance().clear();
+        ResponderQueue.getInstance().reset();
     }
 
     private void enterDescription() {

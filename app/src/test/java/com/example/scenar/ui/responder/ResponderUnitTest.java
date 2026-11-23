@@ -79,12 +79,13 @@ public class ResponderUnitTest {
     }
 
     @Test
-    public void victimHandoffIsSubmittedOnlyOnce() {
+    public void syncingVictimHandoffDoesNotSubmitADuplicate() {
         IncidentReport report = new IncidentReport();
         report.setSummary("Test handoff");
 
-        assertNotNull(queue.ingestVictimHandoff(report, repository));
-        assertEquals(null, queue.ingestVictimHandoff(report, repository));
+        var record = repository.submit(report, SharingConsent.shareNothing());
+        assertEquals(record.getIncidentId(), queue.sync(repository).get(0).getIncidentId());
+        assertEquals(1, queue.sync(repository).size());
         assertEquals(1, repository.getIncidents().size());
     }
 

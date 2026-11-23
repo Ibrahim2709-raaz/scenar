@@ -1,26 +1,33 @@
 package com.example.scenar.ui.victim;
 
+import com.example.scenar.model.DispatchRecord;
 import com.example.scenar.model.IncidentReport;
+import com.example.scenar.model.SharingConsent;
+import com.example.scenar.repository.SimulatedDispatchRepository;
 
 final class PracticeDispatch {
-    private final IncidentReport sharedReport;
-    private final boolean contactNotificationSimulated;
+    private final IncidentReport reviewed;
+    private final SharingConsent consent;
 
-    PracticeDispatch(IncidentReport reviewed, boolean shareMedicalFlags, boolean simulateContactNotification) {
-        sharedReport = new IncidentReport(reviewed);
-        if (!shareMedicalFlags) sharedReport.setMedicalFlags(null);
-        contactNotificationSimulated = simulateContactNotification;
+    PracticeDispatch(IncidentReport reviewed, SharingConsent consent) {
+        this.reviewed = new IncidentReport(reviewed);
+        this.consent = consent;
     }
 
-    IncidentReport sharedReport() {
-        return new IncidentReport(sharedReport);
+    DispatchRecord submit(SimulatedDispatchRepository repository) {
+        return repository.submit(reviewed, consent);
+    }
+
+    boolean includesLocation() {
+        return consent.shareLocation()
+                && (reviewed.getLocationDescription() != null || reviewed.getLatitude() != null);
     }
 
     boolean includesMedicalFlags() {
-        return !sharedReport.getMedicalFlags().isEmpty();
+        return consent.shareMedicalFlags() && !reviewed.getMedicalFlags().isEmpty();
     }
 
-    boolean contactNotificationSimulated() {
-        return contactNotificationSimulated;
+    boolean allowsContactNotification() {
+        return consent.notifyEmergencyContacts();
     }
 }
