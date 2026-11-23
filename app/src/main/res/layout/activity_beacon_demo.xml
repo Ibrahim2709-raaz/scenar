@@ -3,79 +3,147 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/scenar_background"
+    android:clipToPadding="false"
     android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:paddingStart="20dp"
+        android:paddingTop="20dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="28dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@color/scenar_teal_light"
+            android:letterSpacing="0.08"
+            android:paddingStart="12dp"
+            android:paddingTop="7dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="7dp"
+            android:text="@string/beacon_eyebrow"
+            android:textColor="@color/scenar_teal"
+            android:textSize="12sp"
+            android:textStyle="bold" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:text="@string/offline_beacon_title"
-            android:textAppearance="?attr/textAppearanceHeadlineMedium"
+            android:textColor="@color/scenar_text_primary"
+            android:textSize="30sp"
             android:textStyle="bold" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            android:lineSpacingExtra="3dp"
             android:text="@string/offline_beacon_description"
-            android:textAppearance="?attr/textAppearanceBodyLarge" />
+            android:textColor="@color/scenar_text_secondary"
+            android:textSize="16sp" />
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:cardBackgroundColor="#FEF2F2"
-            app:cardCornerRadius="12dp"
-            app:strokeColor="#DC2626"
+            android:layout_marginTop="18dp"
+            app:cardBackgroundColor="@color/scenar_emergency_light"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="0dp"
+            app:strokeColor="#F4ACA6"
             app:strokeWidth="1dp">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center"
-                android:padding="14dp"
-                android:text="@string/beacon_simulation_warning"
-                android:textColor="#B91C1C"
-                android:textStyle="bold" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="14dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/simulation_badge"
+                    android:textColor="@color/scenar_emergency_dark"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:text="@string/beacon_simulation_warning"
+                    android:textColor="@color/scenar_emergency_dark"
+                    android:textSize="12sp" />
+
+            </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:cardCornerRadius="16dp">
+            android:layout_marginTop="18dp"
+            app:cardBackgroundColor="@color/scenar_surface"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/scenar_border"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="20dp">
 
                 <TextView
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/victim_beacon_section"
-                    android:textAppearance="?attr/textAppearanceTitleLarge"
+                    android:background="@color/scenar_emergency_light"
+                    android:paddingStart="10dp"
+                    android:paddingTop="5dp"
+                    android:paddingEnd="10dp"
+                    android:paddingBottom="5dp"
+                    android:text="@string/victim_mode_badge"
+                    android:textColor="@color/scenar_emergency_dark"
+                    android:textSize="11sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="@string/victim_beacon_description" />
+                    android:layout_marginTop="14dp"
+                    android:text="@string/victim_beacon_section"
+                    android:textColor="@color/scenar_text_primary"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="7dp"
+                    android:lineSpacingExtra="2dp"
+                    android:text="@string/victim_beacon_description"
+                    android:textColor="@color/scenar_text_secondary"
+                    android:textSize="14sp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/start_beacon_button"
                     android:layout_width="match_parent"
-                    android:layout_height="56dp"
-                    android:layout_marginTop="16dp"
-                    android:text="@string/start_emergency_beacon" />
+                    android:layout_height="58dp"
+                    android:layout_marginTop="18dp"
+                    android:text="@string/start_emergency_beacon"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/scenar_emergency"
+                    app:cornerRadius="16dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/stop_beacon_button"
@@ -83,23 +151,51 @@
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
                     android:layout_marginTop="8dp"
-                    android:text="@string/stop_emergency_beacon" />
+                    android:text="@string/stop_emergency_beacon"
+                    android:textColor="@color/scenar_emergency"
+                    android:textStyle="bold"
+                    app:cornerRadius="16dp"
+                    app:strokeColor="@color/scenar_emergency" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:background="@color/scenar_surface_alt"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:id="@+id/beacon_status"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/beacon_stopped"
+                        android:textColor="@color/scenar_text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:accessibilityLiveRegion="polite"/>
+
+                    <TextView
+                        android:id="@+id/beacon_details"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="7dp"
+                        android:lineSpacingExtra="2dp"
+                        android:text="@string/beacon_without_location"
+                        android:textColor="@color/scenar_text_secondary"
+                        android:textIsSelectable="true"
+                        android:textSize="13sp" />
+
+                </LinearLayout>
 
                 <TextView
-                    android:id="@+id/beacon_status"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:text="@string/beacon_stopped"
+                    android:text="@string/beacon_privacy_note"
+                    android:textColor="@color/scenar_success"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/beacon_details"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="@string/beacon_without_location"
-                    android:textIsSelectable="true" />
 
             </LinearLayout>
 
@@ -109,34 +205,60 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:layout_marginBottom="20dp"
-            app:cardCornerRadius="16dp">
+            app:cardBackgroundColor="@color/scenar_surface"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/scenar_border"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="20dp">
 
                 <TextView
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/responder_scanner_section"
-                    android:textAppearance="?attr/textAppearanceTitleLarge"
+                    android:background="@color/scenar_blue_light"
+                    android:paddingStart="10dp"
+                    android:paddingTop="5dp"
+                    android:paddingEnd="10dp"
+                    android:paddingBottom="5dp"
+                    android:text="@string/responder_mode_badge"
+                    android:textColor="@color/scenar_blue"
+                    android:textSize="11sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="@string/responder_scanner_description" />
+                    android:layout_marginTop="14dp"
+                    android:text="@string/responder_scanner_section"
+                    android:textColor="@color/scenar_text_primary"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="7dp"
+                    android:lineSpacingExtra="2dp"
+                    android:text="@string/responder_scanner_description"
+                    android:textColor="@color/scenar_text_secondary"
+                    android:textSize="14sp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/start_scan_button"
                     android:layout_width="match_parent"
-                    android:layout_height="56dp"
-                    android:layout_marginTop="16dp"
-                    android:text="@string/start_responder_scan" />
+                    android:layout_height="58dp"
+                    android:layout_marginTop="18dp"
+                    android:text="@string/start_responder_scan"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/scenar_blue"
+                    app:cornerRadius="16dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/stop_scan_button"
@@ -144,27 +266,55 @@
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
                     android:layout_marginTop="8dp"
-                    android:text="@string/stop_responder_scan" />
+                    android:text="@string/stop_responder_scan"
+                    android:textColor="@color/scenar_blue"
+                    android:textStyle="bold"
+                    app:cornerRadius="16dp"
+                    app:strokeColor="@color/scenar_blue" />
 
-                <TextView
-                    android:id="@+id/scan_status"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="@string/scan_stopped"
-                    android:textStyle="bold" />
+                    android:layout_marginTop="16dp"
+                    android:background="@color/scenar_surface_alt"
+                    android:orientation="vertical"
+                    android:padding="14dp">
 
-                <TextView
-                    android:id="@+id/scan_details"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="@string/no_beacon_received"
-                    android:textIsSelectable="true" />
+                    <TextView
+                        android:id="@+id/scan_status"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/scan_stopped"
+                        android:textColor="@color/scenar_text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:accessibilityLiveRegion="polite"/>
+
+                    <TextView
+                        android:id="@+id/scan_details"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="7dp"
+                        android:lineSpacingExtra="2dp"
+                        android:text="@string/no_beacon_received"
+                        android:textColor="@color/scenar_text_secondary"
+                        android:textIsSelectable="true"
+                        android:textSize="13sp" />
+
+                </LinearLayout>
 
             </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:gravity="center"
+            android:text="@string/beacon_device_note"
+            android:textColor="@color/scenar_text_secondary"
+            android:textSize="12sp" />
 
     </LinearLayout>
 

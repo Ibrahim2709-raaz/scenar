@@ -2,14 +2,38 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="responder_primary">#0F172A</color>
-    <color name="responder_accent">#0284C7</color>
-    <color name="responder_critical">#DC2626</color>
-    <color name="responder_warning">#EA580C</color>
-    <color name="responder_success">#16A34A</color>
-    <color name="responder_card_bg">#FFFFFF</color>
-    <color name="responder_bg">#F1F5F9</color>
-    <color name="responder_border">#CBD5E1</color>
-    <color name="responder_text_primary">#0F172A</color>
-    <color name="responder_text_secondary">#64748B</color>
+
+    <!-- SCENAR brand -->
+    <color name="scenar_navy">#091627</color>
+    <color name="scenar_navy_light">#14273F</color>
+    <color name="scenar_blue">#1976D2</color>
+    <color name="scenar_blue_light">#E8F2FF</color>
+    <color name="scenar_teal">#0E8A7A</color>
+    <color name="scenar_teal_light">#E5F7F4</color>
+    <color name="scenar_emergency">#D92D20</color>
+    <color name="scenar_emergency_dark">#B42318</color>
+    <color name="scenar_emergency_light">#FEECEB</color>
+
+    <!-- Surfaces and text -->
+    <color name="scenar_background">#F4F7FB</color>
+    <color name="scenar_surface">#FFFFFFFF</color>
+    <color name="scenar_surface_alt">#EAF0F7</color>
+    <color name="scenar_text_primary">#101828</color>
+    <color name="scenar_text_secondary">#526071</color>
+    <color name="scenar_text_on_dark">#F8FAFC</color>
+    <color name="scenar_border">#D4DCE7</color>
+    <color name="scenar_success">#16815B</color>
+    <color name="scenar_warning">#D97706</color>
+
+    <!-- Existing responder aliases -->
+    <color name="responder_primary">@color/scenar_navy</color>
+    <color name="responder_accent">@color/scenar_blue</color>
+    <color name="responder_critical">@color/scenar_emergency</color>
+    <color name="responder_warning">@color/scenar_warning</color>
+    <color name="responder_success">@color/scenar_success</color>
+    <color name="responder_card_bg">@color/scenar_surface</color>
+    <color name="responder_bg">@color/scenar_background</color>
+    <color name="responder_border">@color/scenar_border</color>
+    <color name="responder_text_primary">@color/scenar_text_primary</color>
+    <color name="responder_text_secondary">@color/scenar_text_secondary</color>
 </resources>

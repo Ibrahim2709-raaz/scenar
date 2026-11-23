@@ -102,4 +102,40 @@
     <string name="no_beacon_received">No rescue beacon has been received yet.</string>
     <string name="packet_rejected">An invalid or expired beacon packet was rejected.</string>
 
+
+    <!-- Polished home screen -->
+    <string name="home_eyebrow">AI-ASSISTED CRISIS RESPONSE</string>
+    <string name="home_hero_title">Clear information when every second matters.</string>
+    <string name="home_hero_description">SCENAR turns distressed reports into structured, reviewable information for simulated emergency response.</string>
+    <string name="choose_experience">Choose an experience</string>
+    <string name="victim_action_description">Describe what happened and let AI organize the details into a report you can verify.</string>
+    <string name="start_incident_report">Start incident report</string>
+    <string name="responder_access_title">Responder console</string>
+    <string name="responder_action_description">Review consent-filtered incidents, locations and simulated dispatch updates.</string>
+    <string name="beacon_action_description">Broadcast or detect an anonymous Bluetooth rescue signal when connectivity is unavailable.</string>
+    <string name="demo_mode_title">DEMO MODE</string>
+
+    <!-- Polished beacon screen -->
+    <string name="beacon_eyebrow">OFFLINE RESCUE MODE</string>
+    <string name="simulation_badge">SIMULATION</string>
+    <string name="victim_mode_badge">VICTIM MODE</string>
+    <string name="responder_mode_badge">RESPONDER MODE</string>
+    <string name="beacon_privacy_note">Privacy protected: no name, medical details or contact information is broadcast.</string>
+    <string name="beacon_device_note">End-to-end detection requires two compatible physical Android devices.</string>
+
+    <!-- Premium home experience -->
+    <string name="scenar_logo_description">SCENAR shield logo</string>
+    <string name="brand_subtitle">Emergency intelligence</string>
+    <string name="demo_chip">DEMO</string>
+    <string name="hero_kicker">AI-ASSISTED RESPONSE</string>
+    <string name="premium_hero_title">Help, structured in seconds.</string>
+    <string name="premium_hero_description">Describe what happened. SCENAR organizes the critical details so you can verify and share them clearly.</string>
+    <string name="other_tools">TOOLS AND DEMOS</string>
+    <string name="premium_responder_description">Review incidents and simulated response updates.</string>
+    <string name="premium_beacon_description">Find victims when mobile networks are unavailable.</string>
+    <string name="how_it_works">HOW SCENAR WORKS</string>
+    <string name="step_describe">Describe</string>
+    <string name="step_structure">AI structures</string>
+    <string name="step_verify">Verify</string>
+
 </resources>
