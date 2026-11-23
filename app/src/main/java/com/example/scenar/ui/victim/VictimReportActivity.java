@@ -43,8 +43,12 @@ import com.example.scenar.ai.IncidentAiServiceFactory;
 import com.example.scenar.model.DispatchRecord;
 import com.example.scenar.model.IncidentReport;
 import com.example.scenar.model.SharingConsent;
+import com.example.scenar.profile.EmergencyProfile;
+import com.example.scenar.profile.EmergencyProfileRepository;
+import com.example.scenar.profile.ProfileStorageException;
 import com.example.scenar.repository.IncidentRepository;
 import com.example.scenar.repository.SimulatedDispatchRepository;
+import com.example.scenar.ui.profile.ProfileActivity;
 
 import org.json.JSONException;
 
@@ -73,6 +77,7 @@ public final class VictimReportActivity extends Activity {
     private static final int SPEECH_REQUEST = 1;
     private static final int LOCATION_REQUEST = 2;
     private static final int EXPORT_REQUEST = 3;
+    private static final int PROFILE_REQUEST = 4;
     private static final int DESCRIPTION_LIMIT = 2500;
     private static final int SUMMARY_LIMIT = 4000;
     private static final String[] CATEGORIES = {
@@ -118,6 +123,8 @@ public final class VictimReportActivity extends Activity {
         String medications = "";
         String conditions = "";
         IncidentReview review;
+        EmergencyProfile profile = EmergencyProfile.empty();
+        boolean profileUnavailable;
         boolean shareLocation;
         boolean shareMedicalFlags;
         boolean simulateContactNotification;
@@ -321,6 +328,7 @@ public final class VictimReportActivity extends Activity {
     }
 
     private void showReview() {
+        reloadProfile();
         title("Review your report");
         step("Step 3 of 3  ·  Check the draft for accuracy");
         LinearLayout facts = card(Color.WHITE);
@@ -356,18 +364,61 @@ public final class VictimReportActivity extends Activity {
         add(content, secondary("Clear report and start over", this::confirmClear), 8);
     }
 
+    private void reloadProfile() {
+        EmergencyProfile loaded;
+        try {
+            loaded = EmergencyProfileRepository.getInstance(this).load();
+            draft.profileUnavailable = false;
+        } catch (ProfileStorageException | SecurityException | ClassCastException error) {
+            loaded = EmergencyProfile.empty();
+            draft.profileUnavailable = true;
+        }
+        if (!loaded.equals(draft.profile)) {
+            draft.shareMedicalFlags = false;
+            draft.simulateContactNotification = false;
+        }
+        draft.profile = loaded;
+    }
+
+    private void editProfile() {
+        if (draft.pendingExport == null && draft.export == null) {
+            startActivityForResult(new Intent(this, ProfileActivity.class), PROFILE_REQUEST);
+        }
+    }
+
+    private void addProfileSummary() {
+        LinearLayout card = card(Color.WHITE);
+        heading(card, "Saved emergency profile");
+        if (draft.profileUnavailable) {
+            status(card, "The saved profile could not be loaded. You can continue without it or edit the profile.");
+        } else if (draft.profile.isEmpty()) {
+            status(card, "No emergency profile saved.");
+        }
+        EmergencyProfile profile = draft.profile;
+        fact(card, "Preferred name", provided(profile.preferredName()));
+        fact(card, "Blood type", provided(profile.bloodType()));
+        fact(card, "Allergies", provided(profile.allergies()));
+        fact(card, "Medications", provided(profile.medications()));
+        fact(card, "Medical conditions", provided(profile.medicalConditions()));
+        fact(card, "Accessibility needs", provided(profile.accessibilityNeeds()));
+        fact(card, "Emergency contact name", provided(profile.emergencyContactName()));
+        fact(card, "Emergency contact phone", provided(profile.emergencyContactPhone()));
+        add(card, secondary("Edit profile", this::editProfile), 8);
+        add(content, card, 12);
+    }
+
     private void addDispatchOptions() {
+        addProfileSummary();
         LinearLayout options = card(Color.WHITE);
         heading(options, "Practice handoff");
-        add(options, text("The local responder demo receives your reviewed incident. These choices "
-                + "control the separate location and medical fields. Check the other fields for "
-                + "private details before sharing.",
+        add(options, text("Medical sharing includes reviewed flags and the saved medical information above. "
+                + "Check the other report fields for private details. Contact notification is simulated.",
                 14, MUTED, false), 8);
-        add(options, checkBox("Include reviewed location", draft.shareLocation,
+        add(options, checkBox("Share current location", draft.shareLocation,
                 checked -> draft.shareLocation = checked), 8);
-        add(options, checkBox("Include reviewed medical flags", draft.shareMedicalFlags,
+        add(options, checkBox("Share medical information", draft.shareMedicalFlags,
                 checked -> draft.shareMedicalFlags = checked), 8);
-        add(options, checkBox("Allow simulated trusted-contact notifications", draft.simulateContactNotification,
+        add(options, checkBox("Notify emergency contact", draft.simulateContactNotification,
                 checked -> draft.simulateContactNotification = checked), 4);
         add(options, primary("Prepare practice handoff", this::preparePracticeHandoff), 8);
         add(content, options, 12);
@@ -404,12 +455,28 @@ public final class VictimReportActivity extends Activity {
         return value == null ? "" : value.toString();
     }
 
+    private static String provided(Object value) {
+        String text = valueOrEmpty(value);
+        return text.isBlank() ? "Not provided" : text;
+    }
+
     private void preparePracticeHandoff() {
         if (draft.pendingExport != null || draft.export != null) return;
         IncidentReport reviewed = validatedReport();
         if (reviewed == null) return;
-        draft.practiceDispatch = new PracticeDispatch(reviewed, new SharingConsent(
-                draft.shareLocation, draft.shareMedicalFlags, draft.simulateContactNotification));
+        try {
+            draft.practiceDispatch = new PracticeDispatch(reviewed, draft.profile, new SharingConsent(
+                    draft.shareLocation, draft.shareMedicalFlags, draft.simulateContactNotification));
+        } catch (PracticeDispatch.MissingEmergencyContact error) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Emergency contact unavailable")
+                    .setMessage("Add an emergency contact name and valid phone number in your profile, "
+                            + "or turn off contact notification to continue.")
+                    .setPositiveButton("Edit saved profile", (dialog, button) -> editProfile())
+                    .setNegativeButton("Back to review", null)
+                    .show();
+            return;
+        }
         go(Screen.DISPATCH);
     }
 
@@ -418,12 +485,23 @@ public final class VictimReportActivity extends Activity {
         LinearLayout status = card(Color.WHITE);
         heading(status, "Report ready for local responder demo");
         fact(status, "Dispatch", "Simulated only. No emergency services contacted.");
-        fact(status, "Location", draft.practiceDispatch.includesLocation()
-                ? "Included with consent." : "None included in the handoff.");
-        fact(status, "Medical flags", draft.practiceDispatch.includesMedicalFlags()
-                ? "Included with consent." : "None included in the handoff.");
-        fact(status, "Trusted contact", draft.practiceDispatch.allowsContactNotification()
-                ? "Responder can simulate a notification." : "Notification permission withheld.");
+        IncidentReport shared = draft.practiceDispatch.sharedReport();
+        fact(status, "Incident type", provided(shared.getIncidentType()));
+        fact(status, "Summary", provided(shared.getSummary()));
+        fact(status, "People affected", provided(shared.getPeopleAffected()));
+        fact(status, "Critical conditions", provided(String.join("\n", shared.getCriticalConditions())));
+        fact(status, "Hazards", provided(String.join("\n", shared.getHazards())));
+        fact(status, "Address or landmark", provided(shared.getLocationDescription()));
+        fact(status, "Coordinates", shared.getLatitude() == null || shared.getLongitude() == null
+                ? "None shared"
+                : String.format(Locale.ROOT, "%.5f, %.5f", shared.getLatitude(), shared.getLongitude()));
+        fact(status, "Medical flags", shared.getMedicalFlags().isEmpty()
+                ? "None shared" : String.join("\n", shared.getMedicalFlags()));
+        fact(status, "Missing information", provided(String.join("\n", shared.getMissingInformation())));
+        fact(status, "Uncertainties", provided(String.join("\n", shared.getUncertainties())));
+        fact(status, "Emergency contact", draft.practiceDispatch.allowsContactNotification()
+                ? "The responder can simulate a notification. Contact details stay in the saved profile."
+                : "No notification requested.");
         add(content, status, 14);
         add(content, primary("Open responder demo", this::openResponderDemo), 12);
         add(content, secondary("Back to review", () -> go(Screen.REVIEW)), 8);
@@ -767,6 +845,8 @@ public final class VictimReportActivity extends Activity {
                         : "Dictation added. Review the captured text.";
             }
             voiceStatus.setText(draft.voiceNotice);
+        } else if (request == PROFILE_REQUEST && draft.screen == Screen.REVIEW) {
+            render();
         } else if (request == EXPORT_REQUEST && draft.pendingExport != null) {
             Export export = draft.pendingExport;
             draft.pendingExport = null;
