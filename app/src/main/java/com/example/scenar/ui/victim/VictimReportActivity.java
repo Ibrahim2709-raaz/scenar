@@ -59,6 +59,7 @@ import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.function.Consumer;
+import android.widget.ProgressBar;
 
 public final class VictimReportActivity extends Activity {
     public static final String EXTRA_DISPATCH_ID = "com.example.scenar.extra.DISPATCH_ID";
@@ -125,6 +126,7 @@ public final class VictimReportActivity extends Activity {
         String voiceNotice = "";
         String locationNotice = "";
         String generationNotice = "";
+        boolean generationCanRetry;
         String exportNotice = "";
         VictimReportDraft.Coordinates coordinates;
         VictimReportDraft.Report report;
@@ -146,6 +148,8 @@ public final class VictimReportActivity extends Activity {
     private TextView voiceStatus;
     private TextView locationStatus;
     private TextView generationStatus;
+    private ProgressBar generationProgress;
+    private Button retryGenerationButton;
     private TextView exportStatus;
     private Button locateButton;
     private Button clearLocationButton;
@@ -312,17 +316,43 @@ public final class VictimReportActivity extends Activity {
         field(medical, "Medical conditions or access needs", draft.conditions, "", 2, 600,
                 value -> draft.conditions = value);
         add(content, medical, 14);
-        generateButton = primary("Generate practice report", this::generate);
-        generateButton.setEnabled(draft.generation == null);
+
+        generateButton = primary(
+                "Generate report",
+                this::generate
+        );
         add(content, generateButton, 16);
-        generationStatus = status(content, draft.generation != null
-                ? "Generating a practice report…" : draft.generationNotice);
-        add(content, secondary("Back", this::backToDetails), 8);
+
+        generationProgress = new ProgressBar(this);
+        generationProgress.setIndeterminate(true);
+        generationProgress.setContentDescription(
+                "SCENAR is organizing the incident report"
+        );
+        add(content, generationProgress, 12);
+
+        generationStatus = status(content, "");
+
+        retryGenerationButton = secondary(
+                "Try generating again",
+                this::generate
+        );
+        add(content, retryGenerationButton, 8);
+
+        add(
+                content,
+                secondary("Back", this::backToDetails),
+                8
+        );
+
+        setGenerating(draft.generation != null);
     }
 
     private void showReview() {
         title("Review your report");
         step("Step 3 of 3  ·  Check the draft for accuracy");
+
+        addGenerationSourceBanner();
+
         LinearLayout facts = card(Color.WHITE);
         heading(facts, "Reported details");
         add(facts, text("Check and correct any simulated AI details before continuing. Clear a field if the information is unknown.",
@@ -354,6 +384,60 @@ public final class VictimReportActivity extends Activity {
             if (draft.pendingExport == null && draft.export == null) go(Screen.CONTEXT);
         }), 8);
         add(content, secondary("Clear report and start over", this::confirmClear), 8);
+    }
+
+    private void addGenerationSourceBanner() {
+        if (draft.report == null) {
+            return;
+        }
+
+        boolean usedFallback =
+                draft.report.usedLocalFallback();
+
+        int backgroundColour = usedFallback
+                ? 0xfffff4e5
+                : 0xffeaf4ff;
+
+        LinearLayout banner =
+                card(backgroundColour);
+
+        heading(
+                banner,
+                usedFallback
+                        ? "Created with local fallback"
+                        : "AI-assisted draft"
+        );
+
+        String message;
+
+        if (usedFallback) {
+            message = draft.report.generationMessage();
+
+            if (message == null
+                    || message.isBlank()) {
+                message =
+                        "The online AI service was unavailable, "
+                                + "so SCENAR organized this report "
+                                + "on the device.";
+            }
+        } else {
+            message =
+                    "SCENAR used the configured AI service to "
+                            + "organize the information. Review every "
+                            + "field before continuing.";
+        }
+
+        add(
+                banner,
+                text(message, 14, MUTED, false),
+                8
+        );
+
+        add(
+                content,
+                banner,
+                14
+        );
     }
 
     private void addDispatchOptions() {
@@ -628,59 +712,170 @@ public final class VictimReportActivity extends Activity {
     }
 
     private void generate() {
-        if (draft.generation != null) return;
+        if (draft.generation != null) {
+            return;
+        }
+
         if (draft.description.trim().isEmpty()) {
             go(Screen.DETAILS);
-            descriptionField.setError("Enter a short description or use dictation.");
+            descriptionField.setError(
+                    "Enter a short description or use dictation."
+            );
             descriptionField.requestFocus();
             return;
         }
+
         if (locationRequest != null) {
             cancelLocation();
-            locationMessage("Location request stopped. Only captured coordinates are included.");
+            locationMessage(
+                    "Location request stopped. "
+                            + "Only captured coordinates are included."
+            );
         }
+
         VictimReportDraft.Input input = input();
-        if (draft.report != null && draft.report.input().equals(input)) {
+
+        if (draft.report != null
+                && draft.report.input().equals(input)) {
             go(Screen.REVIEW);
             return;
         }
+
+        draft.generationCanRetry = false;
+        draft.generationNotice = "";
+
         setGenerating(true);
-        draft.generation = VictimReportDraft.generateIncidentReport(input, incidentAiService);
+
+        draft.generation =
+                VictimReportDraft.generateIncidentReport(
+                        input,
+                        incidentAiService
+                );
+
         observeGeneration(draft.generation);
     }
 
     private void setGenerating(boolean busy) {
-        generateButton.setEnabled(!busy);
-        generationStatus.setText(busy ? "Generating a practice report…" : draft.generationNotice);
+        if (generateButton != null) {
+            generateButton.setEnabled(!busy);
+            generateButton.setText(
+                    busy
+                            ? "Organizing report…"
+                            : "Generate report"
+            );
+        }
+
+        if (generationProgress != null) {
+            generationProgress.setVisibility(
+                    busy
+                            ? View.VISIBLE
+                            : View.GONE
+            );
+        }
+
+        if (generationStatus != null) {
+            generationStatus.setText(
+                    busy
+                            ? "SCENAR is organizing the details. "
+                            + "This may take a few seconds."
+                            : draft.generationNotice
+            );
+        }
+
+        if (retryGenerationButton != null) {
+            retryGenerationButton.setVisibility(
+                    !busy && draft.generationCanRetry
+                            ? View.VISIBLE
+                            : View.GONE
+            );
+            retryGenerationButton.setEnabled(!busy);
+        }
     }
 
-    private void observeGeneration(CompletableFuture<VictimReportDraft.Report> task) {
-        task.whenComplete((report, error) -> handler.post(() -> {
-            if (isDestroyed() || draft.generation != task) return;
-            draft.generation = null;
-            if (error != null || report == null || report.summary() == null
-                    || report.summary().trim().isEmpty() || report.summary().length() > SUMMARY_LIMIT) {
-                draft.generationNotice = "The report could not be generated. Your details are still here. Try again.";
-                setGenerating(false);
-                return;
-            }
-            if (!report.input().equals(input())) {
-                draft.generationNotice = "Details changed during generation. Generate again to include your changes.";
-                setGenerating(false);
-                return;
-            }
-            draft.generationNotice = "";
-            draft.exportNotice = "";
-            draft.report = report;
-            draft.review = new IncidentReview(
-                    report.toReviewedIncident(CATEGORY_LABELS[draft.category], report.summary()));
-            draft.shareLocation = false;
-            draft.shareMedicalFlags = false;
-            draft.simulateContactNotification = false;
-            go(Screen.REVIEW);
-        }));
+    private void observeGeneration(
+            CompletableFuture<VictimReportDraft.Report> task
+    ) {
+        task.whenComplete(
+                (report, error) -> handler.post(() -> {
+                    if (isDestroyed()
+                            || draft.generation != task) {
+                        return;
+                    }
+
+                    draft.generation = null;
+
+                    boolean invalidReport =
+                            report == null
+                                    || report.summary() == null
+                                    || report.summary()
+                                    .trim()
+                                    .isEmpty()
+                                    || report.summary().length()
+                                    > SUMMARY_LIMIT;
+
+                    if (error != null || invalidReport) {
+                        draft.generationCanRetry = true;
+                        draft.generationNotice =
+                                generationFailureMessage(error);
+                        setGenerating(false);
+                        return;
+                    }
+
+                    if (!report.input().equals(input())) {
+                        draft.generationCanRetry = true;
+                        draft.generationNotice =
+                                "Your details changed while the report "
+                                        + "was being generated. Generate "
+                                        + "again to include the changes.";
+                        setGenerating(false);
+                        return;
+                    }
+
+                    draft.generationCanRetry = false;
+                    draft.generationNotice =
+                            report.usedLocalFallback()
+                                    ? report.generationMessage()
+                                    : "";
+                    draft.exportNotice = "";
+                    draft.report = report;
+
+                    draft.review = new IncidentReview(
+                            report.toReviewedIncident(
+                                    CATEGORY_LABELS[draft.category],
+                                    report.summary()
+                            )
+                    );
+
+                    draft.shareLocation = false;
+                    draft.shareMedicalFlags = false;
+                    draft.simulateContactNotification = false;
+
+                    go(Screen.REVIEW);
+                })
+        );
     }
 
+    private String generationFailureMessage(
+            Throwable error
+    ) {
+        Throwable cause = error;
+
+        while (cause instanceof CompletionException
+                && cause.getCause() != null) {
+            cause = cause.getCause();
+        }
+
+        if (cause instanceof IllegalArgumentException
+                && cause.getMessage() != null
+                && !cause.getMessage().isBlank()) {
+            return cause.getMessage()
+                    + " Your entered details are still available.";
+        }
+
+        return "The report could not be generated. "
+                + "Your entered details are still available. "
+                + "Please try again.";
+    }
     private IncidentReport validatedReport() {
         try {
             return draft.review.toReport();
