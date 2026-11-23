@@ -50,6 +50,7 @@ dependencies {
     implementation(libs.constraintlayout)
     implementation(libs.material)
     testImplementation(libs.junit)
+    testImplementation("org.json:json:20240303")
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.espresso.intents)
     androidTestImplementation(libs.ui.automator)

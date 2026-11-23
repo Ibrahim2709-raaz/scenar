@@ -29,6 +29,15 @@
         android:text="@string/report_emergency"
         android:textSize="18sp" />
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/open_responder_button"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginTop="12dp"
+        android:text="@string/open_responder_dashboard"
+        android:textSize="16sp" />
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
