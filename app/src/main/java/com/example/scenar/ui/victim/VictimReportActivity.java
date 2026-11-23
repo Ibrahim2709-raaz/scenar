@@ -62,14 +62,14 @@ import java.util.function.Consumer;
 
 public final class VictimReportActivity extends Activity {
     public static final String EXTRA_DISPATCH_ID = "com.example.scenar.extra.DISPATCH_ID";
-    private static final int INK = 0xff18251f;
-    private static final int GREEN = 0xff19533c;
-    private static final int MUTED = 0xff4e5d54;
-    private static final int PAPER = 0xfff7f7f2;
-    private static final int SOFT = 0xffe9f1e9;
-    private static final int RED = 0xff962f22;
-    private static final int PEACH = 0xfff9eae2;
-    private static final int LINE = 0xffaebdb1;
+    private static final int INK = 0xff101828;
+    private static final int GREEN = 0xff1976d2;
+    private static final int MUTED = 0xff526071;
+    private static final int PAPER = 0xfff4f7fb;
+    private static final int SOFT = 0xffe8f2ff;
+    private static final int RED = 0xffd92d20;
+    private static final int PEACH = 0xfffeeceb;
+    private static final int LINE = 0xffd4dce7;
     private static final int SPEECH_REQUEST = 1;
     private static final int LOCATION_REQUEST = 2;
     private static final int EXPORT_REQUEST = 3;
@@ -210,6 +210,8 @@ public final class VictimReportActivity extends Activity {
         ScrollView scroll = new ScrollView(this);
         scroll.setBackgroundColor(PAPER);
         scroll.setFillViewport(true);
+        scroll.setClipToPadding(false);
+        scroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
         ViewCompat.setOnApplyWindowInsetsListener(scroll, (view, windowInsets) -> {
             var edges = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars()
                     | WindowInsetsCompat.Type.displayCutout() | WindowInsetsCompat.Type.ime());
@@ -812,22 +814,43 @@ public final class VictimReportActivity extends Activity {
 
     private LinearLayout card(int colour) {
         LinearLayout card = column();
-        card.setPadding(dp(16), dp(16), dp(16), dp(16));
-        card.setBackground(background(colour, 16, colour == Color.WHITE));
+        card.setPadding(dp(20), dp(20), dp(20), dp(20));
+        card.setBackground(
+                background(
+                        colour,
+                        20,
+                        colour == Color.WHITE
+                )
+        );
+        card.setElevation(dp(1));
         return card;
     }
 
-    private TextView text(String words, int size, int colour, boolean bold) {
+    private TextView text(
+            String words,
+            int size,
+            int colour,
+            boolean bold
+    ) {
         TextView view = new TextView(this);
         view.setText(words);
         view.setTextSize(size);
         view.setTextColor(colour);
-        if (bold) view.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        view.setLineSpacing(0, 1.08f);
+
+        if (bold) {
+            view.setTypeface(
+                    Typeface.DEFAULT,
+                    Typeface.BOLD
+            );
+        }
+
         return view;
     }
 
     private void title(String words) {
-        TextView view = text(words, 34, INK, true);
+        TextView view = text(words, 30, INK, true);
+        view.setLineSpacing(0, 1.02f);
         ViewCompat.setAccessibilityHeading(view, true);
         add(content, view, 16);
         ViewCompat.setAccessibilityPaneTitle(content, words);
@@ -835,86 +858,224 @@ public final class VictimReportActivity extends Activity {
     }
 
     private void step(String words) {
-        add(content, text(words, 14, GREEN, true), 12);
+        TextView step = text(
+                words.toUpperCase(Locale.ROOT),
+                12,
+                GREEN,
+                true
+        );
+
+        step.setLetterSpacing(0.06f);
+        step.setPadding(
+                dp(12),
+                dp(8),
+                dp(12),
+                dp(8)
+        );
+        step.setBackground(
+                background(SOFT, 100, false)
+        );
+
+        add(content, step, 12);
     }
 
-    private void heading(LinearLayout group, String words) {
+    private void heading(
+            LinearLayout group,
+            String words
+    ) {
         TextView heading = text(words, 20, INK, true);
         ViewCompat.setAccessibilityHeading(heading, true);
         add(group, heading, 0);
     }
 
-    private TextView status(LinearLayout group, String words) {
+    private TextView status(
+            LinearLayout group,
+            String words
+    ) {
         TextView status = text(words, 14, MUTED, false);
-        status.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
-        add(group, status, 6);
+        status.setAccessibilityLiveRegion(
+                View.ACCESSIBILITY_LIVE_REGION_POLITE
+        );
+        add(group, status, 8);
         return status;
     }
 
-    private void fact(LinearLayout group, String name, String value) {
-        add(group, text(name, 14, GREEN, true), 10);
-        add(group, text(value, 16, INK, false), 2);
+    private void fact(
+            LinearLayout group,
+            String name,
+            String value
+    ) {
+        TextView label = text(
+                name.toUpperCase(Locale.ROOT),
+                11,
+                GREEN,
+                true
+        );
+
+        label.setLetterSpacing(0.06f);
+
+        add(group, label, 14);
+        add(group, text(value, 16, INK, false), 4);
     }
 
-    private void label(LinearLayout group, String name, View view, int top) {
-        TextView label = text(name, 15, INK, true);
+    private void label(
+            LinearLayout group,
+            String name,
+            View view,
+            int top
+    ) {
+        TextView label = text(name, 14, INK, true);
         label.setLabelFor(view.getId());
         add(group, label, top);
     }
 
-    private EditText field(LinearLayout group, String name, String value, String hint,
-                           int lines, int limit, Consumer<String> update) {
+    private EditText field(
+            LinearLayout group,
+            String name,
+            String value,
+            String hint,
+            int lines,
+            int limit,
+            Consumer<String> update
+    ) {
         EditText editor = new EditText(this);
         editor.setId(View.generateViewId());
-        editor.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
-                | (lines > 1 ? InputType.TYPE_TEXT_FLAG_MULTI_LINE : 0));
+
+        editor.setInputType(
+                InputType.TYPE_CLASS_TEXT
+                        | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+                        | (lines > 1
+                        ? InputType.TYPE_TEXT_FLAG_MULTI_LINE
+                        : 0)
+        );
+
         editor.setHint(hint);
-        editor.setFilters(new InputFilter[] {new InputFilter.LengthFilter(limit)});
+        editor.setFilters(
+                new InputFilter[]{
+                        new InputFilter.LengthFilter(limit)
+                }
+        );
         editor.setText(value);
         editor.setTextSize(16);
         editor.setMinLines(lines);
-        if (lines > 1) editor.setMaxLines(8);
-        editor.setMinimumHeight(dp(48));
+
+        if (lines > 1) {
+            editor.setMaxLines(8);
+        }
+
+        editor.setMinimumHeight(dp(54));
         editor.setGravity(android.view.Gravity.TOP);
-        editor.setPadding(dp(12), dp(10), dp(12), dp(10));
+        editor.setPadding(
+                dp(14),
+                dp(13),
+                dp(14),
+                dp(13)
+        );
         editor.setTextColor(INK);
         editor.setHintTextColor(MUTED);
-        editor.setBackground(background(Color.WHITE, 8, true));
+        editor.setBackground(
+                background(Color.WHITE, 14, true)
+        );
         editor.setSaveEnabled(false);
+
         editor.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                update.accept(s.toString());
+            @Override
+            public void beforeTextChanged(
+                    CharSequence text,
+                    int start,
+                    int count,
+                    int after
+            ) {
             }
-            @Override public void afterTextChanged(Editable s) {
-                if (editor.getError() != null) editor.setError(null);
+
+            @Override
+            public void onTextChanged(
+                    CharSequence text,
+                    int start,
+                    int before,
+                    int count
+            ) {
+                update.accept(text.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if (editor.getError() != null) {
+                    editor.setError(null);
+                }
             }
         });
-        label(group, name, editor, 12);
-        add(group, editor, 4);
+
+        label(group, name, editor, 14);
+        add(group, editor, 6);
+
         return editor;
     }
 
-    private Button primary(String words, Runnable action) {
-        return button(words, GREEN, Color.WHITE, action);
+    private Button primary(
+            String words,
+            Runnable action
+    ) {
+        return button(
+                words,
+                GREEN,
+                Color.WHITE,
+                false,
+                action
+        );
     }
 
-    private Button secondary(String words, Runnable action) {
-        return button(words, SOFT, GREEN, action);
+    private Button secondary(
+            String words,
+            Runnable action
+    ) {
+        return button(
+                words,
+                Color.WHITE,
+                GREEN,
+                true,
+                action
+        );
     }
 
-    private Button button(String words, int colour, int foreground, Runnable action) {
+    private Button button(
+            String words,
+            int colour,
+            int foreground,
+            boolean border,
+            Runnable action
+    ) {
         Button control = new Button(this);
         control.setText(words);
         control.setTextSize(16);
         control.setAllCaps(false);
-        control.setMinHeight(dp(50));
-        control.setPadding(dp(12), dp(8), dp(12), dp(8));
-        control.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        control.setMinHeight(dp(56));
+        control.setPadding(
+                dp(16),
+                dp(10),
+                dp(16),
+                dp(10)
+        );
+        control.setTypeface(
+                Typeface.DEFAULT,
+                Typeface.BOLD
+        );
         control.setTextColor(foreground);
-        control.setBackground(new RippleDrawable(ColorStateList.valueOf(0x33000000),
-                background(colour, 10, false), null));
-        control.setOnClickListener(view -> action.run());
+        control.setLetterSpacing(0.01f);
+        control.setElevation(dp(1));
+
+        control.setBackground(
+                new RippleDrawable(
+                        ColorStateList.valueOf(0x22000000),
+                        background(colour, 16, border),
+                        null
+                )
+        );
+
+        control.setOnClickListener(
+                view -> action.run()
+        );
+
         return control;
     }
 }
