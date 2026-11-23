@@ -13,8 +13,11 @@ import androidx.fragment.app.Fragment;
 
 import com.example.scenar.MainActivity;
 import com.example.scenar.R;
+import com.example.scenar.model.DispatchRecord;
 import com.example.scenar.model.IncidentReport;
+import com.example.scenar.model.SharingConsent;
 import com.example.scenar.repository.IncidentRepository;
+import com.example.scenar.repository.SimulatedDispatchRepository;
 
 import java.util.List;
 
@@ -65,7 +68,9 @@ public class ReviewFragment extends Fragment {
             report.setLocationDescription(location.getText().toString().trim());
             report.setPeopleAffected(parseIntegerOrNull(peopleAffected.getText().toString()));
             IncidentRepository.getInstance().setCurrentReport(report);
-            ((MainActivity) requireActivity()).showResponderDashboard();
+            DispatchRecord record = SimulatedDispatchRepository.getInstance()
+                    .submit(report, new SharingConsent(true, false, false));
+            ((MainActivity) requireActivity()).showResponderDashboard(record.getIncidentId());
         });
     }
 

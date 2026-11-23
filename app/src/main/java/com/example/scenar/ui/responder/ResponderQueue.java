@@ -19,21 +19,11 @@ import java.util.Set;
  * for the records held by the shared {@link SimulatedDispatchRepository}.
  */
 public final class ResponderQueue {
-    /**
-     * Consent used when the victim screen hands a report over. The victim screen does
-     * not collect SharingConsent yet, so this shares the location the reporter chose to
-     * add but withholds medical details and does not allow contacting anyone. Replace
-     * it with the reporter's own choices once the victim screen collects them.
-     */
-    public static final SharingConsent VICTIM_HANDOFF_CONSENT =
-            new SharingConsent(true, false, false);
-
     private static final ResponderQueue INSTANCE = new ResponderQueue();
 
     private final Map<String, ResponderIncident> incidents = new LinkedHashMap<>();
     private final Set<String> demoIds = new HashSet<>();
     private boolean demoSeeded;
-    private IncidentReport lastHandedOverReport;
 
     ResponderQueue() {
     }
@@ -55,23 +45,6 @@ public final class ResponderQueue {
                 updateStatus(repository, incident, step);
             }
         }
-    }
-
-    /**
-     * Submits the report the victim screen left in IncidentRepository, once.
-     *
-     * @return the new incident, or null when there was nothing new to hand over
-     */
-    public synchronized ResponderIncident ingestVictimHandoff(
-            IncidentReport current,
-            SimulatedDispatchRepository repository
-    ) {
-        if (current == null || current == lastHandedOverReport) return null;
-        lastHandedOverReport = current;
-        DispatchRecord record = repository.submit(current, VICTIM_HANDOFF_CONSENT);
-        ResponderIncident incident = track(record);
-        incident.addTimeline("Victim report", ResponderCopy.VICTIM_HANDOFF);
-        return incident;
     }
 
     /** Submits a report with the given consent and starts tracking it. */
@@ -119,7 +92,6 @@ public final class ResponderQueue {
         incidents.clear();
         demoIds.clear();
         demoSeeded = false;
-        lastHandedOverReport = null;
     }
 
     private ResponderIncident track(DispatchRecord record) {

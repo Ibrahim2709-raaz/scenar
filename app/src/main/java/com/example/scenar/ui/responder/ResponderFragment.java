@@ -37,6 +37,7 @@ import java.util.Locale;
 
 public class ResponderFragment extends Fragment {
     private static final int NEARBY_FACILITY_LIMIT = 3;
+    private static final String ARG_INCIDENT_ID = "incident_id";
 
     private final SimulatedDispatchRepository dispatch = SimulatedDispatchRepository.getInstance();
     private final ResponderQueue queue = ResponderQueue.getInstance();
@@ -45,6 +46,14 @@ public class ResponderFragment extends Fragment {
     private List<ResponderIncident> incidentList;
     private ResponderIncident activeIncident;
     private EmergencyFacility selectedFacility;
+
+    public static ResponderFragment forIncident(@Nullable String incidentId) {
+        ResponderFragment fragment = new ResponderFragment();
+        Bundle arguments = new Bundle();
+        arguments.putString(ARG_INCIDENT_ID, incidentId);
+        fragment.setArguments(arguments);
+        return fragment;
+    }
 
     @Nullable
     @Override
@@ -61,12 +70,15 @@ public class ResponderFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         queue.ensureDemoIncidents(dispatch);
-        ResponderIncident handedOver = queue.ingestVictimHandoff(
-                IncidentRepository.getInstance().getCurrentReport(), dispatch);
         incidentList = queue.sync(dispatch);
-        activeIncident = handedOver != null
-                ? handedOver
-                : (incidentList.isEmpty() ? null : incidentList.get(0));
+        activeIncident = incidentList.isEmpty() ? null : incidentList.get(0);
+        String incidentId = getArguments() == null ? null : getArguments().getString(ARG_INCIDENT_ID);
+        for (ResponderIncident incident : incidentList) {
+            if (incident.getIncidentId().equals(incidentId)) {
+                activeIncident = incident;
+                break;
+            }
+        }
 
         setupQueueTabs(view);
         bindActiveIncident(view);
