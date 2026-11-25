@@ -36,6 +36,36 @@ V2 is the weekend success threshold. Later versions begin only after the current
 - **Victim app:** reporting flow, voice/text UI, GPS, review screen, accessibility, error states.
 - **Responder experience:** dashboard, status updates, map, testing, demo video, and presentation assets.
 
+## Project contributions
+
+### Ibrahim Salman — Technical lead, AI, and integration
+
+- Defined the application architecture, shared incident contracts, milestone plan, and integration workflow.
+- Built and integrated the OpenAI-backed incident-structuring pipeline, JSON parsing, validation, secure backend boundary, and deterministic offline fallback.
+- Added transparent AI loading, retry, failure, and fallback states so users can identify how each report was generated.
+- Led the product-wide UI redesign and built the branded home, splash experience, encrypted emergency profile storage, and privacy-safe BLE rescue-beacon prototype.
+- Coordinated cross-feature integration, pull-request reviews, regression testing, and release preparation.
+
+### Fahad Shaikh — Victim reporting experience
+
+- Built the guided victim-reporting flow for typed or dictated incident descriptions.
+- Added location capture, editable structured reports, validation, export, and preservation of user corrections.
+- Implemented consent-aware victim handoff, hospital and map routing, and user-controlled sharing of location and medical information.
+- Connected the encrypted emergency profile and emergency-contact preferences to the report review and handoff flow.
+- Added unit and instrumentation coverage for the victim journey, consent behavior, routing, and profile integration.
+
+### Darkhrai — Responder experience
+
+- Built the consent-aware responder dashboard, incident queue, incident details, priority presentation, and simulated lifecycle controls.
+- Added responder mapping, emergency-facility selection, routing information, and safe behavior when GPS data is unavailable.
+- Integrated the dashboard with shared dispatch, consent, facility, and status models instead of duplicating feature-specific contracts.
+- Added privacy and safety handling for withheld medical information, missing coordinates, simulated notifications, and BLE payload previews.
+- Added responder-focused tests, demo guidance, and presentation support.
+
+### AI-assisted development
+
+Codex and Claude were used as development assistants for code generation, review, debugging, and documentation. The human team selected the product direction, owned the implementation decisions, reviewed the generated work, and tested the final application.
+
 ## Safety boundaries
 
 - The user reviews and corrects AI output before submission.
