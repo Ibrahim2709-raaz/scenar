@@ -54,7 +54,7 @@ V2 is the weekend success threshold. Later versions begin only after the current
 - Connected the encrypted emergency profile and emergency-contact preferences to the report review and handoff flow.
 - Added unit and instrumentation coverage for the victim journey, consent behavior, routing, and profile integration.
 
-### Darkhrai — Responder experience
+### Ubaidullah Wajid — Responder experience
 
 - Built the consent-aware responder dashboard, incident queue, incident details, priority presentation, and simulated lifecycle controls.
 - Added responder mapping, emergency-facility selection, routing information, and safe behavior when GPS data is unavailable.
